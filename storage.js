@@ -320,4 +320,4 @@ export async function deleteAsset(assetPath) {
   } catch (err) {
     console.warn('[STORAGE] Error deleting local file:', err.message);
   }
-}git
+}
