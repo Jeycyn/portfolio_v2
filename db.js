@@ -149,8 +149,25 @@ export async function query(text, params = []) {
     return await pgPool.query(text, params);
   }
 
+  let sqlite;
+  try {
+    sqlite = getSqliteDb();
+  } catch (err) {
+    // On serverless platforms (e.g. Vercel) the filesystem outside /tmp is
+    // read-only, so opening/creating the local SQLite file always throws
+    // there. When Supabase is the active datastore, any call that reaches
+    // this point is either a redundant duplicate write (Supabase already
+    // succeeded) or a fallback read that would only matter if Supabase
+    // itself had already failed — which each DAO already logs separately.
+    // Either way, this must never crash the request.
+    if (isSupabaseActive && supabaseClient) {
+      console.warn('[DATABASE] Skipping local SQLite fallback (unavailable in this environment):', err.message);
+      return { rows: [], rowCount: 0 };
+    }
+    throw err;
+  }
+
   // SQLite query translation
-  const sqlite = getSqliteDb();
   let sqliteSql = text;
   let counter = 1;
   while (sqliteSql.includes(`$${counter}`)) {
