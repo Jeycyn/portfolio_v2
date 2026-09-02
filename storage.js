@@ -8,15 +8,25 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const LOCAL_UPLOADS_DIR = path.join(__dirname, 'uploads');
-if (!fs.existsSync(LOCAL_UPLOADS_DIR)) {
-  fs.mkdirSync(LOCAL_UPLOADS_DIR, { recursive: true });
-}
 
 // ══════════════════════════════════════════════
 // SUPABASE CLIENT & STORAGE CONFIGURATION
 // ══════════════════════════════════════════════
 const SUPABASE_URL = process.env.SUPABASE_URL || (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('http') ? process.env.DATABASE_URL.trim() : null);
 const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY;
+
+// Only create a local uploads folder when Supabase Storage isn't configured.
+// On serverless platforms (Vercel, etc.) the filesystem outside /tmp is
+// read-only, so this must never run once Supabase is handling storage.
+if (!(SUPABASE_URL && SUPABASE_KEY)) {
+  try {
+    if (!fs.existsSync(LOCAL_UPLOADS_DIR)) {
+      fs.mkdirSync(LOCAL_UPLOADS_DIR, { recursive: true });
+    }
+  } catch (err) {
+    console.warn('[STORAGE] Local uploads folder unavailable in this environment:', err.message);
+  }
+}
 
 export const PUBLIC_BUCKET = 'portfolio-public';
 export const PRIVATE_BUCKET = 'portfolio-private';
@@ -310,4 +320,4 @@ export async function deleteAsset(assetPath) {
   } catch (err) {
     console.warn('[STORAGE] Error deleting local file:', err.message);
   }
-}
+}git

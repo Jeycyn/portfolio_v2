@@ -184,9 +184,18 @@ export async function query(text, params = []) {
 // DATABASE INITIALIZATION & SEEDING
 // ══════════════════════════════════════════════
 export async function initDatabase() {
-  // Always initialize local SQLite schema first to ensure rock-solid fallback
-  initSqliteSchema();
-  seedSqliteBaseline();
+  // Only initialize the local SQLite fallback when Supabase isn't configured.
+  // On serverless platforms like Vercel, the filesystem outside /tmp is
+  // read-only — attempting to mkdir a local data/uploads folder there always
+  // throws, so this must never run when Supabase is already handling storage.
+  if (!isSupabaseActive || !supabaseClient) {
+    try {
+      initSqliteSchema();
+      seedSqliteBaseline();
+    } catch (err) {
+      console.warn('[DATABASE] Local SQLite fallback unavailable in this environment:', err.message);
+    }
+  }
 
   if (isSupabaseActive && supabaseClient) {
     try {

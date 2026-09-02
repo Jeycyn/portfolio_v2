@@ -147,10 +147,19 @@ if (!process.env.VERCEL) {
   }, 60 * 60 * 1000);
 }
 
-// Ensure upload directory exists
+// Ensure upload directory exists — only relevant when Supabase Storage isn't
+// configured (see storage.js). On serverless platforms the filesystem
+// outside /tmp is read-only, so this must be skipped once Supabase is active.
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+const usingSupabaseStorage = Boolean(process.env.SUPABASE_URL && (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY));
+if (!usingSupabaseStorage) {
+  try {
+    if (!fs.existsSync(UPLOADS_DIR)) {
+      fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    }
+  } catch (err) {
+    console.warn('[SERVER] Local uploads folder unavailable in this environment:', err.message);
+  }
 }
 
 /**
