@@ -1,0 +1,8 @@
+{
+  "name": "Jeycyn Portfolio",
+  "description": "Interactive developer portfolio with cyber-HUD aesthetic, particle canvas, capability matrix, and mission logs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TERMINAL GATEWAY || AUTH-001</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --gold:#f0a500;--gold-dim:#7a5200;--gold-bright:#ffd060;
+  --navy:#020c1b;--navy2:#071525;--navy3:#0a1e35;
+  --cyan:#4fc3f7;--cyan-dim:#1a5a7a;
+  --green:#22c55e;--red:#ef4444;
+  --text:#8ab4d4;--text-dim:#3a6080;
+  --mono:'Share Tech Mono',monospace;--orb:'Orbitron',sans-serif;
+}
+html,body{
+  background:var(--navy);
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:13px;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  overflow:hidden;
+}
+
+#scanlines{
+  position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px);
+  pointer-events:none;z-index:999;
+}
+
+/* HUD CORNERS */
+.hc{position:fixed;width:40px;height:40px;z-index:200;border-color:var(--gold-dim);border-style:solid;}
+.hc.tl{top:14px;left:14px;border-width:2px 0 0 2px;}
+.hc.tr{top:14px;right:14px;border-width:2px 2px 0 0;}
+.hc.bl{bottom:14px;left:14px;border-width:0 0 2px 2px;}
+.hc.br{bottom:14px;right:14px;border-width:0 2px 2px 0;}
+
+.auth-container{
+  width:100%;
+  max-width:440px;
+  padding:20px;
+  z-index:10;
+}
+
+.terminal-card{
+  border:1px solid var(--gold-dim);
+  border-radius:4px;
+  background:rgba(7,21,37,0.95);
+  box-shadow:0 0 30px rgba(0,0,0,0.8), 0 0 15px rgba(240,165,0,0.08);
+  overflow:hidden;
+  position:relative;
+}
+
+.terminal-card::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+}
+
+.card-head{
+  background:rgba(240,165,0,0.07);
+  border-bottom:1px solid var(--gold-dim);
+  padding:12px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.card-title{
+  font-family:var(--orb);
+  font-size:11px;
+  color:var(--gold);
+  letter-spacing:4px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.card-title::before{
+  content:'';
+  width:7px;height:7px;
+  border-radius:50%;
+  background:var(--gold);
+  box-shadow:0 0 8px var(--gold);
+}
+
+.badge-sec{
+  font-size:9px;
+  letter-spacing:2px;
+  color:var(--cyan);
+  border:1px solid var(--cyan-dim);
+  padding:2px 6px;
+  border-radius:2px;
+}
+
+.card-body{
+  padding:28px 24px;
+}
+
+.console-prompt{
+  font-size:11px;
+  color:var(--text-dim);
+  margin-bottom:20px;
+  line-height:1.6;
+}
+.console-prompt .cmd{color:var(--gold);}
+.console-prompt .val{color:var(--cyan);}
+
+.input-group{
+  margin-bottom:18px;
+}
+
+.input-label{
+  display:block;
+  font-size:10px;
+  color:var(--gold-bright);
+  letter-spacing:2px;
+  margin-bottom:6px;
+  font-family:var(--orb);
+}
+
+.input-field{
+  width:100%;
+  background:rgba(2,12,27,0.8);
+  border:1px solid var(--gold-dim);
+  border-radius:2px;
+  padding:10px 14px;
+  font-family:var(--mono);
+  font-size:13px;
+  color:#fff;
+  outline:none;
+  transition:all 0.2s;
+}
+
+.input-field:focus{
+  border-color:var(--gold);
+  box-shadow:0 0 10px rgba(240,165,0,0.2);
+  background:rgba(7,21,37,0.9);
+}
+
+.btn-auth{
+  width:100%;
+  background:rgba(240,165,0,0.12);
+  border:1px solid var(--gold);
+  color:var(--gold-bright);
+  padding:12px;
+  font-family:var(--orb);
+  font-size:11px;
+  letter-spacing:3px;
+  cursor:pointer;
+  border-radius:2px;
+  margin-top:10px;
+  transition:all 0.2s;
+}
+
+.btn-auth:hover{
+  background:rgba(240,165,0,0.25);
+  box-shadow:0 0 15px rgba(240,165,0,0.25);
+}
+
+.btn-auth:disabled{
+  opacity:0.5;
+  cursor:not-allowed;
+}
+
+#auth-log{
+  margin-top:16px;
+  padding:10px;
+  background:rgba(2,12,27,0.6);
+  border-left:2px solid var(--gold-dim);
+  font-size:11px;
+  min-height:36px;
+  display:flex;
+  align-items:center;
+}
+
+.log-err{color:var(--red);border-left-color:var(--red)!important;}
+.log-ok{color:var(--green);border-left-color:var(--green)!important;}
+.log-idle{color:var(--text-dim);}
+
+.auth-footer{
+  margin-top:20px;
+  display:flex;
+  justify-content:space-between;
+  font-size:10px;
+  color:var(--text-dim);
+}
+
+.auth-footer a{
+  color:var(--cyan);
+  text-decoration:none;
+}
+.auth-footer a:hover{text-decoration:underline;}
+
+.hint-box{
+  margin-top:16px;
+  font-size:10px;
+  color:var(--text-dim);
+  background:rgba(79,195,247,0.05);
+  border:1px solid rgba(79,195,247,0.15);
+  padding:8px 12px;
+  border-radius:2px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.hint-btn{
+  background:transparent;
+  border:1px solid var(--cyan-dim);
+  color:var(--cyan);
+  font-family:var(--mono);
+  font-size:9px;
+  padding:2px 8px;
+  cursor:pointer;
+}
+.hint-btn:hover{background:rgba(79,195,247,0.15);}
+</style>
+</head>
+<body>
+
+<div id="scanlines"></div>
+<div class="hc tl"></div><div class="hc tr"></div><div class="hc bl"></div><div class="hc br"></div>
+
+<div class="auth-container">
+  <div class="terminal-card">
+    <div class="card-head">
+      <div class="card-title">CLEARANCE GATEWAY</div>
+      <div class="badge-sec">LEVEL:ROOT</div>
+    </div>
+    <div class="card-body">
+      <div class="console-prompt">
+        &gt; <span class="cmd">auth</span> <span class="val">--protocol=bcrypt --session=encrypted</span><br>
+        &gt; Awaiting authorized operator credentials...
+      </div>
+
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="input-group">
+          <label class="input-label" for="username">OPERATOR ID</label>
+          <input type="text" id="username" class="input-field" placeholder="Enter username..." autocomplete="username" required/>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label" for="password">ACCESS CIPHER</label>
+          <input type="password" id="password" class="input-field" placeholder="Enter password..." autocomplete="current-password" required/>
+        </div>
+
+        <button type="submit" id="btnSubmit" class="btn-auth">[ INITIATE HANDSHAKE ]</button>
+      </form>
+
+      <div id="auth-log" class="log-idle">&gt; AWAITING INPUT_</div>
+
+      <div class="auth-footer">
+        <a href="/">&lt; RETURN TO PUBLIC HUD</a>
+        <span>SYS: 2026</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function setLog(msg, type) {
+  const el = document.getElementById('auth-log');
+  el.className = 'log-' + type;
+  el.innerHTML = msg;
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btnSubmit');
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value;
+
+  if (!u || !p) return;
+
+  btn.disabled = true;
+  setLog('&gt; VERIFYING SECURITY HANDSHAKE...', 'idle');
+
+  const gwToken = sessionStorage.getItem('gateway_clearance_token') || new URLSearchParams(window.location.search).get('gt');
+
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(gwToken ? { 'x-gateway-token': gwToken } : {})
+      },
+      body: JSON.stringify({
+        username: u,
+        password: p,
+        gateway_token: gwToken
+      })
+    });
+
+    const data = await res.json();
+
+    if (res.status === 429) {
+      btn.disabled = true;
+      setLog('&gt; ' + (data.error || 'SECURITY LOCKOUT: TOO MANY ATTEMPTS'), 'err');
+      let rem = data.remainingSec || 300;
+      const t = setInterval(() => {
+        rem--;
+        if (rem <= 0) {
+          clearInterval(t);
+          btn.disabled = false;
+          setLog('&gt; LOCKOUT EXPIRED. READY FOR CREDENTIAL RE-ENTRY.', 'idle');
+        } else {
+          setLog(`&gt; SECURITY LOCKOUT: RETRY IN ${rem}s`, 'err');
+        }
+      }, 1000);
+      return;
+    }
+
+    if (res.status === 403 && data.error && data.error.includes('GATEWAY_CLEARANCE_REQUIRED')) {
+      setLog('&gt; SECURITY BARRIER ACTIVE: REDIRECTING TO GATEWAY...', 'err');
+      setTimeout(() => {
+        window.location.href = '/gateway';
+      }, 1000);
+      return;
+    }
+
+    if (res.ok && data.success) {
+      if (data.token) {
+        sessionStorage.setItem('admin_token', data.token);
+      }
+      setLog('&gt; CLEARANCE GRANTED. TRANSFERRING TO CMS...', 'ok');
+      setTimeout(() => {
+        window.location.href = data.redirect || '/admin';
+      }, 500);
+    } else {
+      btn.disabled = false;
+      setLog('&gt; ' + (data.error || 'ACCESS DENIED: INVALID CIPHER'), 'err');
+    }
+  } catch (err) {
+    btn.disabled = false;
+    setLog('&gt; CONNECTION ERROR: FAILED TO REACH GATEWAY', 'err');
+  }
+}
+
+// Auto-check if already authenticated
+const existingToken = sessionStorage.getItem('admin_token');
+fetch('/api/auth/verify', {
+  credentials: 'include',
+  headers: existingToken ? { 'Authorization': 'Bearer ' + existingToken } : {}
+})
+  .then(r => r.json())
+  .then(d => {
+    if (d.authenticated) {
+      setLog('&gt; ACTIVE SESSION DETECTED. REDIRECTING...', 'ok');
+      setTimeout(() => { window.location.href = '/admin'; }, 400);
+    }
+  })
+  .catch(() => {});
+</script>
+</body>
+</html>

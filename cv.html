@@ -1,0 +1,1638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PROFESSIONAL CV GENERATOR // JEYCYN SYSTEMS</title>
+<link rel="icon" href="/favicon.ico"/>
+<link rel="shortcut icon" href="/favicon.ico"/>
+<link rel="apple-touch-icon" href="/favicon.ico"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<!-- html2pdf.js for client-side high-res A4 PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+/* ══════════════════════════════════════════════
+   HUD THEME & BASE STYLES (CONTROL INTERFACE)
+══════════════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --gold:#f0a500;--gold-dim:#7a5200;--gold-bright:#ffd060;
+  --navy:#020c1b;--navy2:#071525;--navy3:#0a1e35;
+  --cyan:#4fc3f7;--cyan-dim:#1a5a7a;
+  --green:#22c55e;--red:#ef4444;
+  --text:#8ab4d4;--text-dim:#3a6080;
+  --mono:'Share Tech Mono',monospace;--orb:'Orbitron',sans-serif;
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+
+body{
+  background:var(--navy);
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:13px;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+
+#scanlines{
+  position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);
+  pointer-events:none;z-index:999;
+}
+
+/* HUD CORNER ACCENTS */
+.hc{position:fixed;width:36px;height:36px;z-index:200;border-color:var(--gold-dim);border-style:solid;pointer-events:none;}
+.hc.tl{top:12px;left:12px;border-width:2px 0 0 2px;}
+.hc.tr{top:12px;right:12px;border-width:2px 2px 0 0;}
+.hc.bl{bottom:12px;left:12px;border-width:0 0 2px 2px;}
+.hc.br{bottom:12px;right:12px;border-width:0 2px 2px 0;}
+
+/* APP LAYOUT */
+.app-layout{
+  display:grid;
+  grid-template-columns:370px 1fr;
+  min-height:100vh;
+  position:relative;
+  z-index:10;
+}
+
+/* HUD CONTROL SIDEBAR */
+.hud-sidebar{
+  background:rgba(7,21,37,0.96);
+  border-right:1px solid rgba(240,165,0,0.2);
+  padding:20px 18px;
+  overflow-y:auto;
+  max-height:100vh;
+  box-shadow:4px 0 20px rgba(0,0,0,0.5);
+}
+
+.sidebar-title{
+  font-family:var(--orb);
+  font-size:12px;
+  color:var(--gold-bright);
+  letter-spacing:2px;
+  margin-bottom:16px;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--gold-dim);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.hud-btn{
+  background:transparent;
+  border:1px solid var(--gold-dim);
+  color:var(--text);
+  padding:7px 12px;
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:1px;
+  cursor:pointer;
+  border-radius:2px;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  transition:all 0.2s;
+}
+.hud-btn:hover{
+  border-color:var(--gold);
+  color:var(--gold-bright);
+  background:rgba(240,165,0,0.1);
+}
+
+.hud-btn-primary{
+  background:rgba(240,165,0,0.18);
+  border-color:var(--gold);
+  color:var(--gold-bright);
+  width:100%;
+  padding:11px;
+  font-family:var(--orb);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:1.5px;
+  margin-bottom:8px;
+}
+.hud-btn-primary:hover{
+  background:rgba(240,165,0,0.35);
+  box-shadow:0 0 15px rgba(240,165,0,0.3);
+}
+
+.hud-btn-secondary{
+  background:rgba(79,195,247,0.1);
+  border-color:var(--cyan-dim);
+  color:var(--cyan);
+  width:100%;
+  padding:8px;
+  font-family:var(--mono);
+  font-size:11px;
+}
+.hud-btn-secondary:hover{
+  background:rgba(79,195,247,0.2);
+  border-color:var(--cyan);
+}
+
+.ctrl-section{
+  margin-bottom:16px;
+  border:1px solid rgba(240,165,0,0.15);
+  background:rgba(2,12,27,0.65);
+  padding:12px;
+  border-radius:3px;
+}
+.ctrl-heading{
+  font-family:var(--orb);
+  font-size:10px;
+  color:var(--gold);
+  letter-spacing:1.5px;
+  margin-bottom:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+/* TEMPLATE BUTTONS */
+.tpl-selector{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.tpl-btn{
+  background:rgba(7,21,37,0.8);
+  border:1px solid rgba(240,165,0,0.2);
+  color:var(--text-dim);
+  padding:9px 12px;
+  text-align:left;
+  font-family:var(--mono);
+  font-size:11px;
+  cursor:pointer;
+  border-radius:2px;
+  transition:all 0.2s;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.tpl-btn:hover{
+  border-color:var(--gold-dim);
+  color:var(--text);
+  background:rgba(240,165,0,0.06);
+}
+.tpl-btn.active{
+  border-color:var(--gold);
+  color:var(--gold-bright);
+  background:rgba(240,165,0,0.16);
+  font-weight:bold;
+}
+.tpl-btn .badge-pill{
+  font-size:9px;
+  padding:2px 6px;
+  border-radius:2px;
+  background:rgba(0,0,0,0.4);
+  border:1px solid rgba(255,255,255,0.1);
+}
+
+/* ACCENT COLOR SELECTOR */
+.accent-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+}
+.accent-btn{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  background:rgba(7,21,37,0.8);
+  border:1px solid rgba(255,255,255,0.1);
+  padding:6px 4px;
+  cursor:pointer;
+  border-radius:2px;
+  font-size:9.5px;
+  color:var(--text-dim);
+  font-family:var(--mono);
+  transition:all 0.2s;
+}
+.accent-btn:hover{
+  border-color:var(--text);
+  color:var(--text);
+}
+.accent-btn.active{
+  border-color:var(--gold-bright);
+  color:var(--gold-bright);
+  background:rgba(240,165,0,0.12);
+}
+.accent-swatch{
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,0.3);
+}
+
+/* FILTER PILLS */
+.filter-row{
+  display:flex;
+  gap:6px;
+  margin-bottom:8px;
+}
+.filter-btn{
+  flex:1;
+  background:rgba(7,21,37,0.8);
+  border:1px solid rgba(240,165,0,0.2);
+  color:var(--text-dim);
+  padding:5px 8px;
+  font-size:10px;
+  font-family:var(--mono);
+  cursor:pointer;
+  border-radius:2px;
+  text-align:center;
+  transition:all 0.2s;
+}
+.filter-btn:hover{color:var(--text);border-color:var(--gold-dim);}
+.filter-btn.active{background:rgba(240,165,0,0.15);color:var(--gold-bright);border-color:var(--gold);}
+
+/* TOGGLE LISTS */
+.toggle-list{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  max-height:140px;
+  overflow-y:auto;
+  padding-right:4px;
+}
+.toggle-list::-webkit-scrollbar{width:4px;}
+.toggle-list::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:2px;}
+.toggle-item{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:11px;
+  color:var(--text);
+  cursor:pointer;
+  user-select:none;
+}
+.toggle-item input[type="checkbox"]{
+  accent-color:var(--gold);
+  cursor:pointer;
+}
+
+/* PREVIEW WORKSPACE */
+.preview-workspace{
+  padding:32px 24px;
+  overflow-y:auto;
+  max-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  background:radial-gradient(ellipse at center, rgba(10,30,53,0.7) 0%, rgba(2,12,27,0.95) 100%);
+}
+
+.preview-status-bar{
+  width:100%;
+  max-width:820px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:10.5px;
+  color:var(--text-dim);
+  margin-bottom:14px;
+  letter-spacing:1px;
+}
+
+/* ══════════════════════════════════════════════
+   A4 SHEET CONTAINER & ACCENT PALETTES
+══════════════════════════════════════════════ */
+.paper-sheet{
+  width:100%;
+  max-width:820px;
+  min-height:1160px;
+  background:#ffffff;
+  color:#1e293b;
+  font-family:var(--sans);
+  box-shadow:0 12px 48px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.08);
+  border-radius:2px;
+  position:relative;
+  margin-bottom:40px;
+  transition:all 0.25s ease;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ACCENT COLOR THEME DEFINITIONS */
+.paper-sheet[data-accent="amber"]{
+  --accent-color:#b45309;
+  --accent-dark:#78350f;
+  --accent-light:#fef3c7;
+  --accent-border:#d97706;
+  --accent-badge-bg:#fef3c7;
+  --accent-badge-text:#92400e;
+  --accent-bar:#d97706;
+  --sidebar-accent:#f59e0b;
+}
+.paper-sheet[data-accent="cyan"]{
+  --accent-color:#0284c7;
+  --accent-dark:#0369a1;
+  --accent-light:#e0f2fe;
+  --accent-border:#0284c7;
+  --accent-badge-bg:#e0f2fe;
+  --accent-badge-text:#0369a1;
+  --accent-bar:#0ea5e9;
+  --sidebar-accent:#38bdf8;
+}
+.paper-sheet[data-accent="slate"]{
+  --accent-color:#334155;
+  --accent-dark:#1e293b;
+  --accent-light:#f1f5f9;
+  --accent-border:#475569;
+  --accent-badge-bg:#f1f5f9;
+  --accent-badge-text:#1e293b;
+  --accent-bar:#64748b;
+  --sidebar-accent:#94a3b8;
+}
+.paper-sheet[data-accent="navy"]{
+  --accent-color:#1e3a8a;
+  --accent-dark:#172554;
+  --accent-light:#eff6ff;
+  --accent-border:#2563eb;
+  --accent-badge-bg:#eff6ff;
+  --accent-badge-text:#1e40af;
+  --accent-bar:#3b82f6;
+  --sidebar-accent:#60a5fa;
+}
+
+/* PAGE BREAK SAFE UTILITIES */
+.cv-avoid-break,
+.proj-block,
+.proj-item,
+.skill-group,
+.cert-item,
+.role-item,
+.sec-block,
+.side-sec{
+  break-inside:avoid;
+  page-break-inside:avoid;
+}
+
+.sec-title,
+.main-head,
+.side-head{
+  break-after:avoid;
+  page-break-after:avoid;
+}
+
+/* ══════════════════════════════════════════════
+   TEMPLATE 1 — MODERN PROFESSIONAL (TWO-COLUMN)
+══════════════════════════════════════════════ */
+.cv-modern{
+  display:grid;
+  grid-template-columns:270px 1fr;
+  min-height:1160px;
+}
+
+.cv-modern .cv-sidebar{
+  background:#0f172a;
+  color:#cbd5e1;
+  padding:36px 22px;
+  display:flex;
+  flex-direction:column;
+  border-right:1px solid #1e293b;
+  -webkit-print-color-adjust:exact;
+  print-color-adjust:exact;
+}
+
+.cv-modern .cv-main-body{
+  padding:38px 32px;
+  background:#ffffff;
+}
+
+.cv-modern .profile-photo-wrap{
+  text-align:center;
+  margin-bottom:18px;
+}
+.cv-modern .profile-photo{
+  width:108px;
+  height:108px;
+  border-radius:50%;
+  object-fit:cover;
+  border:3px solid var(--sidebar-accent);
+  box-shadow:0 4px 14px rgba(0,0,0,0.4);
+  display:inline-block;
+}
+
+.cv-modern .cand-name{
+  font-size:23px;
+  font-weight:800;
+  color:#f8fafc;
+  line-height:1.15;
+  letter-spacing:-0.3px;
+  margin-bottom:4px;
+}
+.cv-modern .cand-tagline{
+  font-size:11px;
+  font-weight:600;
+  color:var(--sidebar-accent);
+  text-transform:uppercase;
+  letter-spacing:1px;
+  margin-bottom:24px;
+  line-height:1.4;
+}
+
+.cv-modern .side-sec{
+  margin-bottom:22px;
+}
+.cv-modern .side-head{
+  font-size:11px;
+  font-weight:700;
+  color:#94a3b8;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  border-bottom:1px solid #334155;
+  padding-bottom:5px;
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.cv-modern .contact-row{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  font-size:11px;
+  color:#cbd5e1;
+  text-decoration:none;
+  margin-bottom:7px;
+  word-break:break-all;
+  line-height:1.4;
+}
+.cv-modern .contact-icon{
+  color:var(--sidebar-accent);
+  font-size:12px;
+  min-width:14px;
+}
+
+.cv-modern .skill-item-bar{
+  margin-bottom:8px;
+}
+.cv-modern .skill-name-row{
+  display:flex;
+  justify-content:space-between;
+  font-size:11px;
+  color:#e2e8f0;
+  margin-bottom:3px;
+}
+.cv-modern .skill-track{
+  height:4px;
+  background:#334155;
+  border-radius:2px;
+  overflow:hidden;
+}
+.cv-modern .skill-fill{
+  height:100%;
+  background:var(--sidebar-accent);
+  border-radius:2px;
+}
+
+.cv-modern .side-role-item{
+  margin-bottom:11px;
+}
+.cv-modern .side-role-title{
+  font-size:11.5px;
+  font-weight:600;
+  color:#f8fafc;
+}
+.cv-modern .side-role-sub{
+  font-size:10px;
+  color:#94a3b8;
+  line-height:1.3;
+}
+
+/* Modern Main Column */
+.cv-modern .main-sec{
+  margin-bottom:24px;
+}
+.cv-modern .main-head{
+  font-size:13.5px;
+  font-weight:800;
+  color:#0f172a;
+  text-transform:uppercase;
+  letter-spacing:1.2px;
+  border-bottom:2px solid var(--accent-border);
+  padding-bottom:5px;
+  margin-bottom:14px;
+}
+
+.cv-modern .summary-box{
+  font-size:12.5px;
+  line-height:1.65;
+  color:#334155;
+  text-align:justify;
+}
+
+.cv-modern .proj-block{
+  margin-bottom:16px;
+  padding-bottom:14px;
+  border-bottom:1px solid #f1f5f9;
+}
+.cv-modern .proj-block:last-child{
+  border-bottom:none;
+  margin-bottom:0;
+  padding-bottom:0;
+}
+.cv-modern .proj-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  margin-bottom:3px;
+}
+.cv-modern .proj-name{
+  font-size:13px;
+  font-weight:700;
+  color:#0f172a;
+}
+.cv-modern .proj-badge{
+  font-size:9.5px;
+  font-weight:700;
+  color:var(--accent-badge-text);
+  background:var(--accent-badge-bg);
+  padding:2px 7px;
+  border-radius:3px;
+  letter-spacing:0.5px;
+}
+.cv-modern .proj-links{
+  font-size:10.5px;
+  color:#64748b;
+  margin-bottom:4px;
+}
+.cv-modern .proj-links a{
+  color:var(--accent-color);
+  text-decoration:none;
+  font-weight:500;
+}
+.cv-modern .proj-desc{
+  font-size:12px;
+  color:#475569;
+  line-height:1.6;
+}
+
+.cv-modern .cert-card{
+  margin-bottom:10px;
+}
+.cv-modern .cert-title{
+  font-size:12.5px;
+  font-weight:700;
+  color:#0f172a;
+}
+.cv-modern .cert-sub{
+  font-size:11px;
+  color:#64748b;
+}
+
+/* ══════════════════════════════════════════════
+   TEMPLATE 2 — EXECUTIVE PROFESSIONAL (SINGLE-COLUMN)
+══════════════════════════════════════════════ */
+.cv-exec{
+  padding:44px 44px;
+}
+
+.cv-exec .exec-header{
+  border-bottom:2px solid #0f172a;
+  padding-bottom:18px;
+  margin-bottom:22px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+}
+
+.cv-exec .exec-cand-info{
+  flex:1;
+}
+.cv-exec .name-title{
+  font-size:28px;
+  font-weight:800;
+  color:#0f172a;
+  letter-spacing:-0.5px;
+  line-height:1.15;
+}
+.cv-exec .role-subtitle{
+  font-size:12.5px;
+  font-weight:700;
+  color:var(--accent-color);
+  text-transform:uppercase;
+  letter-spacing:1px;
+  margin-top:4px;
+}
+
+.cv-exec .exec-photo{
+  width:84px;
+  height:84px;
+  border-radius:6px;
+  object-fit:cover;
+  border:2px solid var(--accent-border);
+  box-shadow:0 3px 8px rgba(0,0,0,0.15);
+}
+
+.cv-exec .exec-contact-bar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 14px;
+  font-size:11px;
+  color:#475569;
+  margin-top:10px;
+  padding-top:8px;
+  border-top:1px solid #e2e8f0;
+}
+.cv-exec .exec-contact-bar a{
+  color:#334155;
+  text-decoration:none;
+}
+.cv-exec .exec-contact-bar a:hover{
+  color:var(--accent-color);
+}
+
+.cv-exec .sec-title{
+  font-size:12.5px;
+  font-weight:800;
+  color:#0f172a;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  border-bottom:1.5px solid var(--accent-border);
+  padding-bottom:4px;
+  margin:20px 0 12px 0;
+  display:flex;
+  justify-content:space-between;
+}
+
+.cv-exec .summary-box{
+  font-size:12.5px;
+  line-height:1.65;
+  color:#334155;
+  text-align:justify;
+}
+
+.cv-exec .skills-grid{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:8px 18px;
+}
+.cv-exec .skill-item{
+  font-size:11.5px;
+  color:#1e293b;
+  display:flex;
+  justify-content:space-between;
+  border-bottom:1px dotted #cbd5e1;
+  padding-bottom:2px;
+}
+.cv-exec .skill-item span:last-child{
+  font-weight:700;
+  color:var(--accent-color);
+  font-size:11px;
+}
+
+.cv-exec .proj-item{
+  margin-bottom:14px;
+}
+.cv-exec .proj-title-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  font-weight:700;
+  font-size:13px;
+  color:#0f172a;
+  margin-bottom:3px;
+}
+.cv-exec .proj-badge{
+  font-size:9.5px;
+  font-weight:700;
+  color:var(--accent-badge-text);
+  background:var(--accent-badge-bg);
+  padding:2px 6px;
+  border-radius:3px;
+}
+.cv-exec .proj-links{
+  font-size:10.5px;
+  color:#64748b;
+  margin-bottom:3px;
+}
+.cv-exec .proj-links a{
+  color:var(--accent-color);
+  text-decoration:none;
+}
+.cv-exec .proj-desc{
+  font-size:12px;
+  color:#475569;
+  line-height:1.6;
+}
+
+.cv-exec .role-card{
+  margin-bottom:10px;
+}
+.cv-exec .role-title-row{
+  font-size:12.5px;
+  font-weight:700;
+  color:#0f172a;
+}
+.cv-exec .role-sub{
+  font-size:11.5px;
+  color:#64748b;
+}
+
+.cv-exec .cert-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px 16px;
+}
+
+/* ══════════════════════════════════════════════
+   TEMPLATE 3 — ATS MINIMALIST (STRICT COMPLIANCE)
+══════════════════════════════════════════════ */
+.cv-ats{
+  padding:40px 40px;
+  font-family:Arial, Helvetica, sans-serif;
+  color:#000000;
+  line-height:1.45;
+}
+
+.cv-ats .ats-head{
+  text-align:center;
+  border-bottom:1.5px solid #000000;
+  padding-bottom:12px;
+  margin-bottom:16px;
+  position:relative;
+}
+.cv-ats .ats-photo{
+  width:64px;
+  height:64px;
+  border-radius:4px;
+  object-fit:cover;
+  border:1px solid #000000;
+  position:absolute;
+  right:0;
+  top:0;
+}
+.cv-ats .name-title{
+  font-size:22px;
+  font-weight:bold;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:#000000;
+}
+.cv-ats .role-subtitle{
+  font-size:12px;
+  font-weight:bold;
+  margin-top:2px;
+  color:#111111;
+}
+.cv-ats .ats-contact{
+  font-size:10.5px;
+  margin-top:6px;
+  color:#222222;
+  line-height:1.4;
+}
+
+.cv-ats .sec-title{
+  font-size:12px;
+  font-weight:bold;
+  text-transform:uppercase;
+  border-bottom:1px solid #000000;
+  padding-bottom:3px;
+  margin:14px 0 8px 0;
+  letter-spacing:0.5px;
+  color:#000000;
+}
+
+.cv-ats p, .cv-ats li{
+  font-size:11px;
+  line-height:1.55;
+  color:#111111;
+}
+
+.cv-ats ul{
+  padding-left:18px;
+  margin-bottom:6px;
+}
+.cv-ats li{
+  margin-bottom:4px;
+}
+
+.cv-ats .proj-item{
+  margin-bottom:10px;
+}
+.cv-ats .proj-head-line{
+  font-weight:bold;
+  font-size:11.5px;
+  color:#000000;
+  display:flex;
+  justify-content:space-between;
+}
+
+/* ══════════════════════════════════════════════
+   PRINT MEDIA STYLES (PURE NATIVE HIGH-RES A4)
+══════════════════════════════════════════════ */
+@media print{
+  @page{
+    margin: 8mm 8mm;
+    size: A4 portrait;
+  }
+  html, body{
+    background:#ffffff !important;
+    color:#000000 !important;
+    font-size:11pt;
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
+  #scanlines, .hc, .hud-sidebar, .preview-status-bar, .no-print{
+    display:none !important;
+  }
+  .app-layout{
+    display:block !important;
+  }
+  .preview-workspace{
+    padding:0 !important;
+    background:#ffffff !important;
+    max-height:none !important;
+    overflow:visible !important;
+  }
+  .paper-sheet{
+    box-shadow:none !important;
+    max-width:100% !important;
+    margin:0 !important;
+    border-radius:0 !important;
+    min-height:auto !important;
+  }
+  .cv-modern, .cv-exec, .cv-ats{
+    page-break-inside:auto;
+  }
+  a{
+    text-decoration:none !important;
+    color:inherit !important;
+  }
+}
+
+@media(max-width:900px){
+  .app-layout{grid-template-columns:1fr;}
+  .hud-sidebar{max-height:none;}
+  .preview-workspace{padding:16px 8px;}
+  .paper-sheet{min-height:auto;}
+  .cv-modern{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<div id="scanlines" class="no-print"></div>
+<div class="hc tl no-print"></div><div class="hc tr no-print"></div><div class="hc bl no-print"></div><div class="hc br no-print"></div>
+
+<div class="app-layout">
+  <!-- HUD CONTROLS & EXCLUSION TOGGLES -->
+  <aside class="hud-sidebar no-print">
+    <div class="sidebar-title">
+      <span>CV STUDIO // ENGINE</span>
+      <a href="/" class="hud-btn" style="font-size:9px;">&lt; HUD</a>
+    </div>
+
+    <!-- PRIMARY ACTION BUTTONS -->
+    <div class="ctrl-section">
+      <button id="btnDownloadPdf" onclick="downloadPdf()" class="hud-btn hud-btn-primary">📥 DOWNLOAD PDF (A4)</button>
+      <button onclick="window.print()" class="hud-btn hud-btn-secondary">🖨 PRINT / SYSTEM PDF</button>
+      <div id="pdfStatusMsg" style="font-size:9.5px;color:var(--text-dim);margin-top:6px;text-align:center;">&gt; High-DPI Vector/Canvas Engine Ready</div>
+    </div>
+
+    <!-- TEMPLATE PICKER -->
+    <div class="ctrl-section">
+      <div class="ctrl-heading">
+        <span>01. SELECT TEMPLATE</span>
+      </div>
+      <div class="tpl-selector">
+        <button class="tpl-btn active" onclick="setTemplate('modern', this)">
+          <span>01. Modern Professional</span>
+          <span class="badge-pill">2-Column</span>
+        </button>
+        <button class="tpl-btn" onclick="setTemplate('exec', this)">
+          <span>02. Executive Professional</span>
+          <span class="badge-pill">Corporate</span>
+        </button>
+        <button class="tpl-btn" onclick="setTemplate('ats', this)">
+          <span>03. ATS-Safe Minimalist</span>
+          <span class="badge-pill">ATS-Ready</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ACCENT COLOR SELECTOR -->
+    <div class="ctrl-section">
+      <div class="ctrl-heading">
+        <span>02. THEME ACCENT</span>
+      </div>
+      <div class="accent-grid">
+        <button class="accent-btn active" onclick="setAccent('amber', this)">
+          <span class="accent-swatch" style="background:#d97706;"></span>
+          <span>Amber</span>
+        </button>
+        <button class="accent-btn" onclick="setAccent('cyan', this)">
+          <span class="accent-swatch" style="background:#0284c7;"></span>
+          <span>Cyan</span>
+        </button>
+        <button class="accent-btn" onclick="setAccent('slate', this)">
+          <span class="accent-swatch" style="background:#475569;"></span>
+          <span>Slate</span>
+        </button>
+        <button class="accent-btn" onclick="setAccent('navy', this)">
+          <span class="accent-swatch" style="background:#1e3a8a;"></span>
+          <span>Navy</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- SECTION VISIBILITY CONTROLS -->
+    <div class="ctrl-section">
+      <div class="ctrl-heading">
+        <span>03. SECTION CONTROLS</span>
+      </div>
+      <div class="toggle-list">
+        <label class="toggle-item">
+          <input type="checkbox" id="chk_photo" checked onchange="toggleSection('photo', this.checked)"/>
+          <span>Profile Photo (if uploaded)</span>
+        </label>
+        <label class="toggle-item">
+          <input type="checkbox" id="chk_summary" checked onchange="toggleSection('summary', this.checked)"/>
+          <span>Professional Summary / Bio</span>
+        </label>
+        <label class="toggle-item">
+          <input type="checkbox" id="chk_contact" checked onchange="toggleSection('contact', this.checked)"/>
+          <span>Contact & Social Links</span>
+        </label>
+        <label class="toggle-item">
+          <input type="checkbox" id="chk_skills" checked onchange="toggleSection('skills', this.checked)"/>
+          <span>Technical Skills</span>
+        </label>
+        <label class="toggle-item">
+          <input type="checkbox" id="chk_roles" checked onchange="toggleSection('roles', this.checked)"/>
+          <span>Leadership & Command Roles</span>
+        </label>
+        <label class="toggle-item">
+          <input type="checkbox" id="chk_projects" checked onchange="toggleSection('projects', this.checked)"/>
+          <span>Engineering Projects</span>
+        </label>
+        <label class="toggle-item">
+          <input type="checkbox" id="chk_certs" checked onchange="toggleSection('certs', this.checked)"/>
+          <span>Honors & Certifications</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- SKILL PROFICIENCY FILTER -->
+    <div class="ctrl-section">
+      <div class="ctrl-heading">
+        <span>04. SKILLS FILTER</span>
+      </div>
+      <div class="filter-row">
+        <button class="filter-btn active" id="btnFilterAll" onclick="setSkillFilter('all')">All Skills</button>
+        <button class="filter-btn" id="btnFilterTop" onclick="setSkillFilter('top')">Top-Tier (≥80%)</button>
+      </div>
+      <div id="skillToggles" class="toggle-list">Loading skills...</div>
+    </div>
+
+    <!-- MISSION / PROJECT INCLUSION FILTER -->
+    <div class="ctrl-section">
+      <div class="ctrl-heading">
+        <span>05. INCLUDE PROJECTS</span>
+      </div>
+      <div id="projectToggles" class="toggle-list">Loading projects...</div>
+    </div>
+
+    <div style="text-align:center;font-size:10px;color:var(--text-dim);margin-top:12px;">
+      <a href="/admin" style="color:var(--gold);text-decoration:none;">&gt; Open Operator CMS</a>
+    </div>
+  </aside>
+
+  <!-- LIVE PAPER PREVIEW WORKSPACE -->
+  <main class="preview-workspace">
+    <div class="preview-status-bar no-print">
+      <span>PREVIEW: <span id="lblCurrentTpl" style="color:var(--gold-bright);">MODERN PROFESSIONAL</span></span>
+      <span>A4 STANDARD · LIVE DATA-BOUND</span>
+    </div>
+    <div id="paperSheet" class="paper-sheet" data-accent="amber">
+      <!-- DYNAMICALLY RENDERED BY JAVASCRIPT -->
+    </div>
+  </main>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   CENTRALIZED CV STATE MANAGEMENT
+══════════════════════════════════════════════ */
+const cvState = {
+  profile: null,
+  projects: [],
+  skills: [],
+  selectedTemplate: 'modern', // 'modern' | 'exec' | 'ats'
+  selectedAccent: 'amber',    // 'amber' | 'cyan' | 'slate' | 'navy'
+  skillFilter: 'all',         // 'all' | 'top'
+  sectionVisibility: {
+    photo: true,
+    summary: true,
+    contact: true,
+    skills: true,
+    roles: true,
+    projects: true,
+    certs: true
+  },
+  includedProjects: new Set(),
+  includedSkills: new Set()
+};
+
+/* ══════════════════════════════════════════════
+   INITIALIZATION & API INTEGRATION
+══════════════════════════════════════════════ */
+async function init() {
+  const statusEl = document.getElementById('pdfStatusMsg');
+  if (statusEl) statusEl.textContent = '> Loading profile and engineering records...';
+
+  try {
+    const [pRes, prRes, skRes] = await Promise.all([
+      fetch('/api/profile').catch(() => null),
+      fetch('/api/projects').catch(() => null),
+      fetch('/api/skills').catch(() => null)
+    ]);
+
+    if (pRes && pRes.ok) {
+      cvState.profile = await pRes.json();
+    } else {
+      cvState.profile = {
+        name: 'J.BYRON',
+        callsign: 'DEV-001',
+        tagline: 'SOFTWARE DEVELOPER · ROBOTICS ENGINEER · AI SYSTEMS',
+        bio: 'Innovative software developer and robotics engineer.',
+        contact_email: 'contact@example.com',
+        location: 'ELDORET-KE'
+      };
+    }
+
+    if (prRes && prRes.ok) {
+      cvState.projects = await prRes.json();
+    } else {
+      cvState.projects = [];
+    }
+
+    if (skRes && skRes.ok) {
+      cvState.skills = await skRes.json();
+    } else {
+      cvState.skills = [];
+    }
+
+    // Default inclusions
+    cvState.projects.forEach(p => {
+      if (p.visibility !== 0) cvState.includedProjects.add(p.id);
+    });
+    cvState.skills.forEach(s => cvState.includedSkills.add(s.id));
+
+    buildSidebarToggles();
+    renderCV();
+    if (statusEl) statusEl.textContent = '> System Ready. A4 Print & PDF Engine Online.';
+  } catch (err) {
+    console.error('Initialization error in CV Studio:', err);
+    if (statusEl) statusEl.textContent = '> Warning: Local fallback state active.';
+    renderCV();
+  }
+}
+
+/* ══════════════════════════════════════════════
+   SIDEBAR TOGGLES BUILDER
+══════════════════════════════════════════════ */
+function buildSidebarToggles() {
+  const prDiv = document.getElementById('projectToggles');
+  if (prDiv) {
+    if (!cvState.projects || cvState.projects.length === 0) {
+      prDiv.innerHTML = '<span style="color:var(--text-dim);font-size:10px;">No public projects found</span>';
+    } else {
+      prDiv.innerHTML = cvState.projects.map(p => `
+        <label class="toggle-item">
+          <input type="checkbox" ${cvState.includedProjects.has(p.id) ? 'checked' : ''} onchange="toggleProject(${p.id}, this.checked)"/>
+          <span>${escapeHTML(p.title)}</span>
+        </label>
+      `).join('');
+    }
+  }
+
+  const skDiv = document.getElementById('skillToggles');
+  if (skDiv) {
+    if (!cvState.skills || cvState.skills.length === 0) {
+      skDiv.innerHTML = '<span style="color:var(--text-dim);font-size:10px;">No skills registered</span>';
+    } else {
+      skDiv.innerHTML = cvState.skills.map(s => `
+        <label class="toggle-item">
+          <input type="checkbox" ${cvState.includedSkills.has(s.id) ? 'checked' : ''} onchange="toggleSkill(${s.id}, this.checked)"/>
+          <span>${escapeHTML(s.name)} (${s.proficiency}%)</span>
+        </label>
+      `).join('');
+    }
+  }
+}
+
+/* ══════════════════════════════════════════════
+   STATE MUTATION CONTROLS
+══════════════════════════════════════════════ */
+function toggleProject(id, checked) {
+  if (checked) cvState.includedProjects.add(id);
+  else cvState.includedProjects.delete(id);
+  renderCV();
+}
+
+function toggleSkill(id, checked) {
+  if (checked) cvState.includedSkills.add(id);
+  else cvState.includedSkills.delete(id);
+  renderCV();
+}
+
+function toggleSection(secKey, checked) {
+  cvState.sectionVisibility[secKey] = checked;
+  renderCV();
+}
+
+function setTemplate(tpl, btn) {
+  cvState.selectedTemplate = tpl;
+  document.querySelectorAll('.tpl-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  // Update label
+  const lbl = document.getElementById('lblCurrentTpl');
+  if (lbl) {
+    if (tpl === 'modern') lbl.textContent = 'MODERN PROFESSIONAL';
+    else if (tpl === 'exec') lbl.textContent = 'EXECUTIVE PROFESSIONAL';
+    else lbl.textContent = 'ATS-SAFE MINIMALIST';
+  }
+
+  // ATS template hides photo by default for ATS compliance unless user opted in
+  if (tpl === 'ats') {
+    const chkPhoto = document.getElementById('chk_photo');
+    if (chkPhoto && cvState.sectionVisibility.photo === true) {
+      // By default unchecked for ATS unless explicitly kept
+      cvState.sectionVisibility.photo = false;
+      chkPhoto.checked = false;
+    }
+  } else {
+    const chkPhoto = document.getElementById('chk_photo');
+    if (chkPhoto && cvState.sectionVisibility.photo === false) {
+      cvState.sectionVisibility.photo = true;
+      chkPhoto.checked = true;
+    }
+  }
+
+  renderCV();
+}
+
+function setAccent(accent, btn) {
+  cvState.selectedAccent = accent;
+  document.querySelectorAll('.accent-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const sheet = document.getElementById('paperSheet');
+  if (sheet) sheet.setAttribute('data-accent', accent);
+  renderCV();
+}
+
+function setSkillFilter(mode) {
+  cvState.skillFilter = mode;
+  document.getElementById('btnFilterAll')?.classList.toggle('active', mode === 'all');
+  document.getElementById('btnFilterTop')?.classList.toggle('active', mode === 'top');
+  renderCV();
+}
+
+/* ══════════════════════════════════════════════
+   CENTRAL TEMPLATE RENDERER
+══════════════════════════════════════════════ */
+function renderCV() {
+  const sheet = document.getElementById('paperSheet');
+  if (!sheet) return;
+  const p = cvState.profile || {};
+
+  sheet.setAttribute('data-accent', cvState.selectedAccent);
+
+  // Filter projects by inclusion
+  const activeProjects = (cvState.projects || []).filter(proj => cvState.includedProjects.has(proj.id));
+
+  // Filter skills by inclusion + threshold
+  let activeSkills = (cvState.skills || []).filter(skill => cvState.includedSkills.has(skill.id));
+  if (cvState.skillFilter === 'top') {
+    activeSkills = activeSkills.filter(skill => (skill.proficiency || 0) >= 80);
+  }
+
+  if (cvState.selectedTemplate === 'modern') {
+    renderModernTemplate(sheet, p, activeProjects, activeSkills, cvState.sectionVisibility);
+  } else if (cvState.selectedTemplate === 'exec') {
+    renderExecTemplate(sheet, p, activeProjects, activeSkills, cvState.sectionVisibility);
+  } else {
+    renderAtsTemplate(sheet, p, activeProjects, activeSkills, cvState.sectionVisibility);
+  }
+}
+
+/* ══════════════════════════════════════════════
+   TEMPLATE 1: MODERN PROFESSIONAL (TWO-COLUMN)
+══════════════════════════════════════════════ */
+function renderModernTemplate(sheet, p, projList, skillList, vis) {
+  sheet.className = 'paper-sheet cv-modern';
+
+  const photoHtml = (vis.photo && p.photo_path) ? `
+    <div class="profile-photo-wrap cv-avoid-break">
+      <img src="${escapeHTML(p.photo_path)}" class="profile-photo" alt="Profile of ${escapeHTML(p.name || 'Candidate')}" onerror="this.parentElement.style.display='none'"/>
+    </div>
+  ` : '';
+
+  const contactHtml = vis.contact ? `
+    <div class="side-sec cv-avoid-break">
+      <div class="side-head">CONTACT & CHANNELS</div>
+      ${(p.contact_email && sanitizeUrl(p.contact_email, 'mailto:') !== '#') ? `<a class="contact-row" href="${sanitizeUrl(p.contact_email, 'mailto:')}"><span class="contact-icon">✉</span> <span>${escapeHTML(p.contact_email)}</span></a>` : ''}
+      ${(p.contact_github && sanitizeUrl(p.contact_github) !== '#') ? `<a class="contact-row" href="${sanitizeUrl(p.contact_github)}" target="_blank" rel="noopener noreferrer"><span class="contact-icon">💻</span> <span>${escapeHTML(p.contact_github.replace(/^https?:\/\//, ''))}</span></a>` : ''}
+      ${(p.contact_linkedin && sanitizeUrl(p.contact_linkedin) !== '#') ? `<a class="contact-row" href="${sanitizeUrl(p.contact_linkedin)}" target="_blank" rel="noopener noreferrer"><span class="contact-icon">💼</span> <span>${escapeHTML(p.contact_linkedin.replace(/^https?:\/\//, ''))}</span></a>` : ''}
+      ${(p.contact_website && sanitizeUrl(p.contact_website) !== '#') ? `<a class="contact-row" href="${sanitizeUrl(p.contact_website)}" target="_blank" rel="noopener noreferrer"><span class="contact-icon">🌐</span> <span>${escapeHTML(p.contact_website.replace(/^https?:\/\//, ''))}</span></a>` : ''}
+      ${p.location ? `<div class="contact-row"><span class="contact-icon">📍</span> <span>${escapeHTML(p.location)}</span></div>` : ''}
+    </div>
+  ` : '';
+
+  const skillsHtml = (vis.skills && skillList.length > 0) ? `
+    <div class="side-sec cv-avoid-break">
+      <div class="side-head">TECHNICAL PROFICIENCIES</div>
+      ${skillList.map(s => `
+        <div class="skill-item-bar cv-avoid-break">
+          <div class="skill-name-row">
+            <span>${escapeHTML(s.name)}</span>
+            <span style="font-weight:600;color:var(--sidebar-accent);">${s.proficiency}%</span>
+          </div>
+          <div class="skill-track">
+            <div class="skill-fill" style="width:${Math.min(100, Math.max(10, s.proficiency))}%;"></div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
+  const rolesHtml = (vis.roles && p.command_roles && p.command_roles.length > 0) ? `
+    <div class="side-sec cv-avoid-break">
+      <div class="side-head">LEADERSHIP & ROLES</div>
+      ${p.command_roles.map(r => `
+        <div class="side-role-item cv-avoid-break">
+          <div class="side-role-title">${escapeHTML(r.title)}</div>
+          <div class="side-role-sub">${escapeHTML(r.subtitle || '')}</div>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
+  const summaryHtml = (vis.summary && p.bio) ? `
+    <div class="main-sec cv-avoid-break">
+      <div class="main-head">PROFESSIONAL PROFILE</div>
+      <p class="summary-box">${escapeHTML(p.bio)}</p>
+    </div>
+  ` : '';
+
+  const projectsHtml = (vis.projects && projList.length > 0) ? `
+    <div class="main-sec">
+      <div class="main-head">KEY ENGINEERING PROJECTS & INITIATIVES</div>
+      ${projList.map(item => `
+        <div class="proj-block cv-avoid-break">
+          <div class="proj-top">
+            <span class="proj-name">${escapeHTML(item.title)}</span>
+            ${item.badge ? `<span class="proj-badge">${escapeHTML(item.badge)}</span>` : ''}
+          </div>
+          ${(item.project_url || item.repo_url) ? `
+            <div class="proj-links">
+              ${(item.project_url && sanitizeUrl(item.project_url) !== '#') ? `<a href="${sanitizeUrl(item.project_url)}" target="_blank" rel="noopener noreferrer">↗ Live System</a>` : ''}
+              ${(item.project_url && item.repo_url && sanitizeUrl(item.project_url) !== '#' && sanitizeUrl(item.repo_url) !== '#') ? ' · ' : ''}
+              ${(item.repo_url && sanitizeUrl(item.repo_url) !== '#') ? `<a href="${sanitizeUrl(item.repo_url)}" target="_blank" rel="noopener noreferrer">⌥ Repository</a>` : ''}
+            </div>
+          ` : ''}
+          <div class="proj-desc">${escapeHTML(item.description)}</div>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
+  const certsHtml = (vis.certs && p.certifications && p.certifications.length > 0) ? `
+    <div class="main-sec cv-avoid-break">
+      <div class="main-head">HONORS & CERTIFICATIONS</div>
+      ${p.certifications.map(c => `
+        <div class="cert-card cv-avoid-break">
+          <div class="cert-title">${escapeHTML(c.title)}</div>
+          <div class="cert-sub">${escapeHTML(c.subtitle || '')}</div>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
+  sheet.innerHTML = `
+    <aside class="cv-sidebar">
+      ${photoHtml}
+      <div class="cand-name">${escapeHTML(p.name || 'JEYCYN JEFF')}</div>
+      <div class="cand-tagline">${escapeHTML(p.tagline || 'SOFTWARE DEVELOPER · ROBOTICS ENGINEER')}</div>
+      ${contactHtml}
+      ${skillsHtml}
+      ${rolesHtml}
+    </aside>
+    <section class="cv-main-body">
+      ${summaryHtml}
+      ${projectsHtml}
+      ${certsHtml}
+    </section>
+  `;
+}
+
+/* ══════════════════════════════════════════════
+   TEMPLATE 2: EXECUTIVE PROFESSIONAL (SINGLE-COLUMN)
+══════════════════════════════════════════════ */
+function renderExecTemplate(sheet, p, projList, skillList, vis) {
+  sheet.className = 'paper-sheet cv-exec';
+
+  const photoHtml = (vis.photo && p.photo_path) ? `
+    <img src="${escapeHTML(p.photo_path)}" class="exec-photo" alt="Profile photo" onerror="this.style.display='none'"/>
+  ` : '';
+
+  const contactItems = [];
+  if (vis.contact) {
+    if (p.contact_email && sanitizeUrl(p.contact_email, 'mailto:') !== '#') contactItems.push(`<a href="${sanitizeUrl(p.contact_email, 'mailto:')}">✉ ${escapeHTML(p.contact_email)}</a>`);
+    if (p.location) contactItems.push(`📍 ${escapeHTML(p.location)}`);
+    if (p.contact_github && sanitizeUrl(p.contact_github) !== '#') contactItems.push(`<a href="${sanitizeUrl(p.contact_github)}" target="_blank" rel="noopener noreferrer">💻 GitHub: ${escapeHTML(p.contact_github.replace(/^https?:\/\//, ''))}</a>`);
+    if (p.contact_linkedin && sanitizeUrl(p.contact_linkedin) !== '#') contactItems.push(`<a href="${sanitizeUrl(p.contact_linkedin)}" target="_blank" rel="noopener noreferrer">💼 LinkedIn: ${escapeHTML(p.contact_linkedin.replace(/^https?:\/\//, ''))}</a>`);
+    if (p.contact_website && sanitizeUrl(p.contact_website) !== '#') contactItems.push(`<a href="${sanitizeUrl(p.contact_website)}" target="_blank" rel="noopener noreferrer">🌐 ${escapeHTML(p.contact_website.replace(/^https?:\/\//, ''))}</a>`);
+  }
+
+  const summaryHtml = (vis.summary && p.bio) ? `
+    <div class="cv-avoid-break">
+      <div class="sec-title">EXECUTIVE SUMMARY</div>
+      <p class="summary-box">${escapeHTML(p.bio)}</p>
+    </div>
+  ` : '';
+
+  const skillsHtml = (vis.skills && skillList.length > 0) ? `
+    <div class="cv-avoid-break">
+      <div class="sec-title">TECHNICAL & ENGINEERING COMPETENCIES</div>
+      <div class="skills-grid">
+        ${skillList.map(s => `
+          <div class="skill-item">
+            <span>${escapeHTML(s.name)}</span>
+            <span>${s.proficiency}%</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  ` : '';
+
+  const projectsHtml = (vis.projects && projList.length > 0) ? `
+    <div>
+      <div class="sec-title">ENGINEERING PROJECTS & SYSTEMS</div>
+      ${projList.map(item => `
+        <div class="proj-item cv-avoid-break">
+          <div class="proj-title-row">
+            <span>${escapeHTML(item.title)}</span>
+            ${item.badge ? `<span class="proj-badge">${escapeHTML(item.badge)}</span>` : ''}
+          </div>
+          ${(item.project_url || item.repo_url) ? `
+            <div class="proj-links">
+              ${(item.project_url && sanitizeUrl(item.project_url) !== '#') ? `<a href="${sanitizeUrl(item.project_url)}" target="_blank" rel="noopener noreferrer">Link: ${escapeHTML(item.project_url)}</a>` : ''}
+              ${(item.project_url && item.repo_url && sanitizeUrl(item.project_url) !== '#' && sanitizeUrl(item.repo_url) !== '#') ? ' · ' : ''}
+              ${(item.repo_url && sanitizeUrl(item.repo_url) !== '#') ? `<a href="${sanitizeUrl(item.repo_url)}" target="_blank" rel="noopener noreferrer">Repo: ${escapeHTML(item.repo_url)}</a>` : ''}
+            </div>
+          ` : ''}
+          <div class="proj-desc">${escapeHTML(item.description)}</div>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
+  const rolesHtml = (vis.roles && p.command_roles && p.command_roles.length > 0) ? `
+    <div class="cv-avoid-break">
+      <div class="sec-title">LEADERSHIP ACHIEVEMENTS & ROLES</div>
+      ${p.command_roles.map(r => `
+        <div class="role-card cv-avoid-break">
+          <div class="role-title-row">${escapeHTML(r.title)}</div>
+          <div class="role-sub">${escapeHTML(r.subtitle || '')}</div>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
+  const certsHtml = (vis.certs && p.certifications && p.certifications.length > 0) ? `
+    <div class="cv-avoid-break">
+      <div class="sec-title">HONORS & CERTIFICATIONS</div>
+      <div class="cert-grid">
+        ${p.certifications.map(c => `
+          <div class="role-card cv-avoid-break">
+            <div class="role-title-row">${escapeHTML(c.title)}</div>
+            <div class="role-sub">${escapeHTML(c.subtitle || '')}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  ` : '';
+
+  sheet.innerHTML = `
+    <header class="exec-header cv-avoid-break">
+      <div class="exec-cand-info">
+        <div class="name-title">${escapeHTML(p.name || 'JEYCYN JEFF')}</div>
+        <div class="role-subtitle">${escapeHTML(p.tagline || 'SOFTWARE DEVELOPER · ROBOTICS ENGINEER · AI SYSTEMS')}</div>
+        ${contactItems.length > 0 ? `<div class="exec-contact-bar">${contactItems.join(' · ')}</div>` : ''}
+      </div>
+      ${photoHtml}
+    </header>
+    ${summaryHtml}
+    ${skillsHtml}
+    ${projectsHtml}
+    ${rolesHtml}
+    ${certsHtml}
+  `;
+}
+
+/* ══════════════════════════════════════════════
+   TEMPLATE 3: ATS-SAFE MINIMALIST
+══════════════════════════════════════════════ */
+function renderAtsTemplate(sheet, p, projList, skillList, vis) {
+  sheet.className = 'paper-sheet cv-ats';
+
+  const photoHtml = (vis.photo && p.photo_path) ? `
+    <img src="${escapeHTML(p.photo_path)}" class="ats-photo" alt="Photo" onerror="this.style.display='none'"/>
+  ` : '';
+
+  const contactLine = [];
+  if (vis.contact) {
+    if (p.contact_email) contactLine.push(escapeHTML(p.contact_email));
+    if (p.location) contactLine.push(escapeHTML(p.location));
+    if (p.contact_github) contactLine.push(escapeHTML(p.contact_github.replace(/^https?:\/\//, '')));
+    if (p.contact_linkedin) contactLine.push(escapeHTML(p.contact_linkedin.replace(/^https?:\/\//, '')));
+    if (p.contact_website) contactLine.push(escapeHTML(p.contact_website.replace(/^https?:\/\//, '')));
+  }
+
+  const summaryHtml = (vis.summary && p.bio) ? `
+    <section class="cv-avoid-break">
+      <h2 class="sec-title">PROFESSIONAL SUMMARY</h2>
+      <p>${escapeHTML(p.bio)}</p>
+    </section>
+  ` : '';
+
+  const skillsHtml = (vis.skills && skillList.length > 0) ? `
+    <section class="cv-avoid-break">
+      <h2 class="sec-title">TECHNICAL SKILLS</h2>
+      <p><b>Core Competencies:</b> ${skillList.map(s => escapeHTML(s.name)).join(', ')}</p>
+    </section>
+  ` : '';
+
+  const projectsHtml = (vis.projects && projList.length > 0) ? `
+    <section>
+      <h2 class="sec-title">PROJECT EXPERIENCE</h2>
+      ${projList.map(item => `
+        <div class="proj-item cv-avoid-break">
+          <div class="proj-head-line">
+            <span>${escapeHTML(item.title)} ${item.badge ? `[${escapeHTML(item.badge)}]` : ''}</span>
+          </div>
+          <p>${escapeHTML(item.description)}</p>
+        </div>
+      `).join('')}
+    </section>
+  ` : '';
+
+  const rolesHtml = (vis.roles && p.command_roles && p.command_roles.length > 0) ? `
+    <section class="cv-avoid-break">
+      <h2 class="sec-title">LEADERSHIP & AFFILIATIONS</h2>
+      <ul>
+        ${p.command_roles.map(r => `
+          <li><b>${escapeHTML(r.title)}</b>: ${escapeHTML(r.subtitle || '')}</li>
+        `).join('')}
+      </ul>
+    </section>
+  ` : '';
+
+  const certsHtml = (vis.certs && p.certifications && p.certifications.length > 0) ? `
+    <section class="cv-avoid-break">
+      <h2 class="sec-title">HONORS & CERTIFICATIONS</h2>
+      <ul>
+        ${p.certifications.map(c => `
+          <li><b>${escapeHTML(c.title)}</b>: ${escapeHTML(c.subtitle || '')}</li>
+        `).join('')}
+      </ul>
+    </section>
+  ` : '';
+
+  sheet.innerHTML = `
+    <header class="ats-head cv-avoid-break">
+      ${photoHtml}
+      <h1 class="name-title">${escapeHTML(p.name || 'JEYCYN JEFF')}</h1>
+      <div class="role-subtitle">${escapeHTML(p.tagline || 'Software Developer & Robotics Engineer')}</div>
+      ${contactLine.length > 0 ? `<div class="ats-contact">${contactLine.join(' &nbsp;|&nbsp; ')}</div>` : ''}
+    </header>
+    ${summaryHtml}
+    ${skillsHtml}
+    ${projectsHtml}
+    ${rolesHtml}
+    ${certsHtml}
+  `;
+}
+
+/* ══════════════════════════════════════════════
+   HIGH-RES A4 PDF DOWNLOAD ENGINE
+══════════════════════════════════════════════ */
+async function downloadPdf() {
+  const btn = document.getElementById('btnDownloadPdf');
+  const statusEl = document.getElementById('pdfStatusMsg');
+  const sheet = document.getElementById('paperSheet');
+
+  if (!sheet) return;
+
+  const originalText = btn ? btn.innerHTML : '📥 DOWNLOAD PDF (A4)';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ GENERATING A4 PDF...';
+  }
+  if (statusEl) statusEl.textContent = '> Rendering high-DPI document layers...';
+
+  // Compute safe filename from profile name
+  const candidateName = (cvState.profile?.name || 'Candidate')
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  const filename = `${candidateName || 'Candidate'}_CV.pdf`;
+
+  if (typeof html2pdf !== 'undefined') {
+    try {
+      const opt = {
+        margin: [6, 6, 6, 6], // mm
+        filename: filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          scrollY: 0
+        },
+        jsPDF: {
+          unit: 'mm',
+          format: 'a4',
+          orientation: 'portrait'
+        },
+        pagebreak: {
+          mode: ['avoid-all', 'css', 'legacy']
+        }
+      };
+
+      await html2pdf().set(opt).from(sheet).save();
+
+      if (statusEl) statusEl.textContent = `✓ PDF downloaded: ${filename}`;
+    } catch (err) {
+      console.warn('html2pdf renderer failed, triggering native print fallback:', err);
+      if (statusEl) statusEl.textContent = '> Triggering print dialog for high-res save...';
+      window.print();
+    }
+  } else {
+    // Fallback: Trigger native browser PDF print
+    if (statusEl) statusEl.textContent = '> Triggering print dialog for high-res save...';
+    window.print();
+  }
+
+  if (btn) {
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }, 1500);
+  }
+}
+
+/* ══════════════════════════════════════════════
+   STRING ESCAPER & URL SANITIZER (XSS PREVENTION)
+══════════════════════════════════════════════ */
+function sanitizeUrl(url, prefix = '') {
+  if (!url) return '#';
+  const str = String(url).trim();
+  if (prefix === 'mailto:') {
+    const cleanEmail = str.replace(/^mailto:/i, '').trim();
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      return 'mailto:' + cleanEmail;
+    }
+    return '#';
+  }
+  if (/^(?:javascript|data|vbscript):/i.test(str)) {
+    return '#';
+  }
+  if (str.startsWith('http://') || str.startsWith('https://') || str.startsWith('/') || str.startsWith('#')) {
+    return escapeHTML(str);
+  }
+  if (/^[a-zA-Z0-9][-a-zA-Z0-9+&@#/%?=~_|!:,.;]*\.[a-zA-Z]{2,}/.test(str)) {
+    return 'https://' + escapeHTML(str);
+  }
+  return '#';
+}
+
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// Start CV Studio
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,2937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>OPERATOR CMS // TERMINAL CONTROL</title>
+<link rel="icon" href="/favicon.ico"/>
+<link rel="shortcut icon" href="/favicon.ico"/>
+<link rel="apple-touch-icon" href="/favicon.ico"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --gold:#f0a500;--gold-dim:#7a5200;--gold-bright:#ffd060;
+  --navy:#020c1b;--navy2:#071525;--navy3:#0a1e35;
+  --cyan:#4fc3f7;--cyan-dim:#1a5a7a;
+  --green:#22c55e;--red:#ef4444;
+  --text:#8ab4d4;--text-dim:#3a6080;
+  --mono:'Share Tech Mono',monospace;--orb:'Orbitron',sans-serif;
+}
+html,body{
+  background:var(--navy);
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:13px;
+  min-height:100vh;
+  padding-bottom:60px;
+}
+
+#scanlines{
+  position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px);
+  pointer-events:none;z-index:9998;
+}
+
+/* HUD CORNERS */
+.hc{position:fixed;width:40px;height:40px;z-index:200;border-color:var(--gold-dim);border-style:solid;}
+.hc.tl{top:14px;left:14px;border-width:2px 0 0 2px;}
+.hc.tr{top:14px;right:14px;border-width:2px 2px 0 0;}
+.hc.bl{bottom:14px;left:14px;border-width:0 0 2px 2px;}
+.hc.br{bottom:14px;right:14px;border-width:0 2px 2px 0;}
+
+.container{
+  max-width:1100px;
+  margin:0 auto;
+  padding:20px 24px;
+  position:relative;
+  z-index:10;
+}
+
+/* STATUS & NAV HEADER */
+.cms-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-bottom:1px solid var(--gold-dim);
+  padding-bottom:12px;
+  margin-bottom:20px;
+  flex-wrap:wrap;
+  gap:12px;
+}
+
+.cms-title{
+  font-family:var(--orb);
+  font-size:14px;
+  color:var(--gold-bright);
+  letter-spacing:4px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.live-indicator{
+  width:8px;height:8px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 8px var(--green);animation:pulseDot 1.5s infinite;
+}
+@keyframes pulseDot{50%{opacity:0.3;}}
+
+.cms-actions{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.hud-btn{
+  background:transparent;
+  border:1px solid var(--gold-dim);
+  color:var(--text);
+  padding:6px 14px;
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:2px;
+  cursor:pointer;
+  border-radius:2px;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  transition:all 0.2s;
+}
+.hud-btn:hover{
+  border-color:var(--gold);
+  color:var(--gold-bright);
+  background:rgba(240,165,0,0.08);
+}
+.hud-btn-cyan{border-color:var(--cyan-dim);color:var(--cyan);}
+.hud-btn-cyan:hover{border-color:var(--cyan);background:rgba(79,195,247,0.1);color:#fff;}
+.hud-btn-red{border-color:rgba(239,68,68,0.4);color:var(--red);}
+.hud-btn-red:hover{border-color:var(--red);background:rgba(239,68,68,0.15);}
+.hud-btn-gold{background:rgba(240,165,0,0.15);border-color:var(--gold);color:var(--gold-bright);}
+.hud-btn-gold:hover{background:rgba(240,165,0,0.3);}
+
+/* TERMINAL LOG CONSOLE */
+.term-log{
+  background:rgba(2,12,27,0.9);
+  border:1px solid var(--gold-dim);
+  border-left:4px solid var(--gold);
+  padding:10px 16px;
+  font-size:11px;
+  color:var(--gold-bright);
+  letter-spacing:1px;
+  margin-bottom:20px;
+  border-radius:2px;
+  min-height:38px;
+  display:flex;
+  align-items:center;
+  box-shadow:0 0 15px rgba(0,0,0,0.5);
+}
+
+/* TABS */
+.cms-tabs{
+  display:flex;
+  gap:6px;
+  margin-bottom:20px;
+  flex-wrap:wrap;
+  border-bottom:1px solid rgba(240,165,0,0.15);
+  padding-bottom:12px;
+}
+.cms-tab{
+  font-family:var(--mono);
+  font-size:11px;
+  padding:8px 18px;
+  border:1px solid var(--gold-dim);
+  border-radius:2px;
+  cursor:pointer;
+  color:var(--text-dim);
+  background:transparent;
+  letter-spacing:2px;
+  transition:all 0.2s;
+}
+.cms-tab:hover, .cms-tab.active{
+  color:var(--gold);
+  border-color:var(--gold);
+  background:rgba(240,165,0,0.08);
+  box-shadow:0 0 10px rgba(240,165,0,0.12);
+}
+
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* PANELS & FORMS */
+.panel{
+  border:1px solid var(--gold-dim);
+  border-radius:3px;
+  background:rgba(7,21,37,0.92);
+  margin-bottom:20px;
+  overflow:hidden;
+  box-shadow:0 0 20px rgba(0,0,0,0.5);
+}
+.panel-head{
+  background:rgba(240,165,0,0.06);
+  border-bottom:1px solid var(--gold-dim);
+  padding:10px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-family:var(--orb);
+  font-size:11px;
+  color:var(--gold);
+  letter-spacing:4px;
+}
+.panel-body{padding:22px;}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
+  gap:16px;
+}
+.form-grid-3{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:14px;
+}
+.form-full{grid-column:1 / -1;}
+
+.field-group{
+  margin-bottom:16px;
+}
+.field-label{
+  display:block;
+  font-size:10px;
+  color:var(--gold-bright);
+  letter-spacing:2px;
+  margin-bottom:6px;
+  font-family:var(--orb);
+}
+.field-input, .field-textarea, .field-select{
+  width:100%;
+  background:rgba(2,12,27,0.85);
+  border:1px solid var(--gold-dim);
+  border-radius:2px;
+  padding:9px 12px;
+  font-family:var(--mono);
+  font-size:12px;
+  color:#fff;
+  outline:none;
+  transition:all 0.2s;
+}
+.field-input:focus, .field-textarea:focus, .field-select:focus{
+  border-color:var(--gold);
+  box-shadow:0 0 8px rgba(240,165,0,0.2);
+  background:rgba(7,21,37,0.95);
+}
+.field-textarea{min-height:90px;resize:vertical;line-height:1.6;}
+
+/* ITEM CARDS */
+.item-card{
+  background:rgba(2,12,27,0.7);
+  border:1px solid var(--gold-dim);
+  padding:16px;
+  border-radius:3px;
+  margin-bottom:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:16px;
+  position:relative;
+}
+.item-card::before{
+  content:'';
+  position:absolute;
+  left:0;top:0;bottom:0;
+  width:3px;
+  background:linear-gradient(180deg,var(--gold),var(--gold-dim));
+}
+.item-card.hidden-item{
+  opacity:0.6;
+  border-style:dashed;
+}
+
+.item-info{flex:1;}
+.item-title{
+  font-family:var(--orb);
+  font-size:12px;
+  color:var(--gold-bright);
+  margin-bottom:4px;
+}
+.item-sub{font-size:11px;color:var(--text-dim);line-height:1.5;}
+
+.item-badge{
+  font-size:9px;
+  padding:2px 8px;
+  border-radius:2px;
+  display:inline-block;
+  margin-bottom:6px;
+  letter-spacing:1px;
+}
+.badge-g{background:rgba(240,165,0,0.12);color:var(--gold);border:1px solid var(--gold-dim);}
+.badge-c{background:rgba(79,195,247,0.08);color:var(--cyan);border:1px solid var(--cyan-dim);}
+
+.item-ctrls{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  flex-shrink:0;
+}
+
+/* SKILLS MATRIX & RADAR */
+.skills-layout{
+  display:grid;
+  grid-template-columns:340px 1fr;
+  gap:20px;
+}
+.radar-box{
+  border:1px solid var(--gold-dim);
+  background:rgba(2,12,27,0.8);
+  border-radius:3px;
+  padding:14px;
+  text-align:center;
+}
+#liveRadarCanvas{display:block;margin:0 auto;}
+
+.skill-row-edit{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  background:rgba(2,12,27,0.6);
+  border:1px solid var(--gold-dim);
+  padding:10px 14px;
+  border-radius:2px;
+  margin-bottom:8px;
+}
+.skill-row-edit input[type="range"]{
+  flex:1;
+  accent-color:var(--gold);
+}
+
+/* IMAGE UPLOADER */
+.upload-dropzone{
+  border:1px dashed var(--gold-dim);
+  border-radius:3px;
+  padding:16px;
+  text-align:center;
+  background:rgba(240,165,0,0.02);
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.upload-dropzone:hover{
+  border-color:var(--gold);
+  background:rgba(240,165,0,0.05);
+}
+.preview-thumb{
+  max-width:120px;
+  max-height:80px;
+  object-fit:cover;
+  border:1px solid var(--gold);
+  border-radius:2px;
+  margin-top:8px;
+}
+
+/* SEO SEARCH & SOCIAL PREVIEW CARDS */
+.seo-preview-box{
+  background:#fff;
+  color:#202124;
+  border-radius:8px;
+  padding:16px;
+  font-family:arial,sans-serif;
+  margin-top:12px;
+  box-shadow:0 1px 6px rgba(0,0,0,0.2);
+}
+.seo-preview-url-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:4px;
+}
+.seo-preview-favicon{
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:#f1f3f4;
+  object-fit:cover;
+}
+.seo-preview-site-name{
+  font-size:12px;
+  color:#202124;
+  font-weight:bold;
+}
+.seo-preview-url{
+  font-size:12px;
+  color:#5f6368;
+}
+.seo-preview-title{
+  font-size:18px;
+  color:#1a0dab;
+  text-decoration:none;
+  cursor:pointer;
+  line-height:1.3;
+  margin-bottom:4px;
+  word-break:break-word;
+}
+.seo-preview-title:hover{text-decoration:underline;}
+.seo-preview-desc{
+  font-size:13px;
+  color:#4d5156;
+  line-height:1.45;
+  word-break:break-word;
+}
+
+.social-preview-card{
+  background:#15202b;
+  border:1px solid #38444d;
+  border-radius:12px;
+  overflow:hidden;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  margin-top:12px;
+  color:#fff;
+}
+.social-preview-img-wrap{
+  width:100%;
+  height:180px;
+  background:#192734;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+.social-preview-img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+.social-preview-body{
+  padding:12px 14px;
+}
+.social-preview-domain{
+  font-size:11px;
+  color:#8899a6;
+  text-transform:uppercase;
+  margin-bottom:4px;
+  letter-spacing:0.5px;
+}
+.social-preview-title{
+  font-size:14px;
+  font-weight:bold;
+  color:#fff;
+  margin-bottom:4px;
+  line-height:1.3;
+}
+.social-preview-desc{
+  font-size:12px;
+  color:#8899a6;
+  line-height:1.4;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+
+/* EVIDENCE MODAL & LIGHTBOX */
+.evidence-modal-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(2,10,20,0.92);
+  backdrop-filter:blur(8px);
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.evidence-modal-box{
+  background:rgba(7,21,37,0.98);
+  border:1px solid var(--gold);
+  box-shadow:0 0 40px rgba(0,0,0,0.9),0 0 30px rgba(240,165,0,0.2);
+  border-radius:4px;
+  width:100%;
+  max-width:780px;
+  max-height:88vh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.evidence-modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 20px;
+  border-bottom:1px solid var(--gold-dim);
+  background:rgba(240,165,0,0.06);
+}
+.evidence-modal-title{
+  font-family:var(--orb);
+  font-size:12px;
+  color:var(--gold-bright);
+  letter-spacing:2px;
+}
+.evidence-modal-body{
+  padding:20px;
+  overflow-y:auto;
+  flex:1;
+}
+
+@media(max-width:768px){
+  .skills-layout{grid-template-columns:1fr;}
+  .form-grid-3{grid-template-columns:1fr;}
+  .item-card{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+
+<div id="scanlines"></div>
+<div class="hc tl"></div><div class="hc tr"></div><div class="hc bl"></div><div class="hc br"></div>
+
+<div class="container">
+  <!-- CMS HEADER -->
+  <header class="cms-header">
+    <div class="cms-title">
+      <div class="live-indicator"></div>
+      OPERATOR CMS // TERMINAL CONTROL
+    </div>
+    <div class="cms-actions">
+      <a href="/" class="hud-btn">&lt; PUBLIC HUD</a>
+      <a href="/cv" class="hud-btn hud-btn-cyan">📄 CV GENERATOR</a>
+      <button onclick="handleLogout()" class="hud-btn hud-btn-red">[ LOGOUT ]</button>
+    </div>
+  </header>
+
+  <!-- LIVE TERMINAL CONSOLE -->
+  <div id="termLog" class="term-log">&gt; TERMINAL READY // CLEARANCE GRANTED_</div>
+
+  <!-- SECURITY WARNING BANNER (SEC-HIGH-02) -->
+  <div id="securityAlertBanner" style="display:none;background:rgba(255,0,51,0.12);border:1px solid #ff0033;padding:12px 16px;border-radius:3px;margin-bottom:16px;font-family:var(--mono);font-size:12px;color:#ff6677;align-items:center;justify-content:space-between;gap:12px;">
+    <div>
+      <strong style="color:#ff0033;font-family:var(--orb);letter-spacing:1px;">⚠️ SECURITY NOTICE:</strong>
+      <span id="securityAlertText">Default factory credentials or passcodes are currently active. Update them immediately in Tab 05 (Security Cipher) and Tab 06 (Gateway Matrix).</span>
+    </div>
+    <button onclick="switchCmsTab(document.querySelectorAll('.cms-tab')[4],'tab-security')" class="hud-btn hud-btn-red" style="font-size:10px;padding:4px 10px;white-space:nowrap;">REKEY NOW</button>
+  </div>
+
+  <!-- NAVIGATION TABS -->
+  <div class="cms-tabs">
+    <button class="cms-tab active" onclick="switchCmsTab(this,'tab-profile')">[ 01. PROFILE CONFIG ]</button>
+    <button class="cms-tab" onclick="switchCmsTab(this,'tab-projects')">[ 02. MISSIONS / PROJECTS ]</button>
+    <button class="cms-tab" onclick="switchCmsTab(this,'tab-skills')">[ 03. CAPABILITY MATRIX ]</button>
+    <button class="cms-tab" onclick="switchCmsTab(this,'tab-seo')">[ 04. SEO &amp; SITE IDENTITY ]</button>
+    <button class="cms-tab" onclick="switchCmsTab(this,'tab-security')">[ 05. SECURITY CIPHER ]</button>
+    <button class="cms-tab" onclick="switchCmsTab(this,'tab-gateway')">[ 06. GATEWAY MATRIX ]</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       TAB 1: PROFILE CONFIG
+  ══════════════════════════════════════════════ -->
+  <div id="tab-profile" class="tab-content active">
+    <form id="profileForm" onsubmit="saveProfile(event)">
+      <div class="panel">
+        <div class="panel-head">OPERATOR IDENTITY & CALLSIGN</div>
+        <div class="panel-body">
+          <div class="form-grid">
+            <div class="field-group">
+              <label class="field-label">OPERATOR NAME (CODENAME)</label>
+              <input type="text" id="prof_name" class="field-input" required/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">CALLSIGN / UNIT ID</label>
+              <input type="text" id="prof_callsign" class="field-input" required/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">SECONDARY HANDLE / TAG</label>
+              <input type="text" id="prof_secondary" class="field-input"/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">LOCATION CODE</label>
+              <input type="text" id="prof_location" class="field-input"/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">SYSTEM STATUS</label>
+              <input type="text" id="prof_status" class="field-input"/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">PROFILE PHOTO UPLOAD</label>
+              <input type="file" id="prof_file" accept="image/*" onchange="uploadAsset(this, 'prof_photo')" style="font-size:10px;color:var(--text-dim);"/>
+              <input type="hidden" id="prof_photo"/>
+              <div id="prof_photo_preview"></div>
+            </div>
+          </div>
+
+          <div class="field-group form-full">
+            <label class="field-label">HERO TAGLINE</label>
+            <input type="text" id="prof_tagline" class="field-input"/>
+          </div>
+
+          <div class="field-group form-full">
+            <label class="field-label">TYPEWRITER BIO TEXT</label>
+            <textarea id="prof_bio" class="field-textarea"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">STATS & UPLINK CHANNELS</div>
+        <div class="panel-body">
+          <div class="form-grid-3">
+            <div class="field-group">
+              <label class="field-label">STAT 1: FAIR WINS</label>
+              <input type="text" id="prof_stat_wins" class="field-input"/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">STAT 2: CLUBS LED</label>
+              <input type="text" id="prof_stat_clubs" class="field-input"/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">STAT 3: DRIVE VALUE</label>
+              <input type="text" id="prof_stat_drive" class="field-input"/>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="field-group">
+              <label class="field-label">CONTACT EMAIL</label>
+              <input type="email" id="prof_email" class="field-input"/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">GITHUB PROFILE URL</label>
+              <input type="url" id="prof_github" class="field-input"/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">LINKEDIN URL</label>
+              <input type="url" id="prof_linkedin" class="field-input"/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">PORTFOLIO / WEB LINK</label>
+              <input type="url" id="prof_website" class="field-input"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span>COMMAND ROLES &amp; LEADERSHIP</span>
+          <button type="button" onclick="openNewRoleForm()" class="hud-btn hud-btn-gold">+ ADD COMMAND ROLE</button>
+        </div>
+        <div class="panel-body">
+          <p style="font-size:11px;color:var(--text-dim);margin-bottom:12px;">Leadership positions and club commands. Click "EVIDENCE" on any role to attach proofs, official gazettes, or articles.</p>
+          <div id="commandRolesList" style="margin-bottom:14px;">Loading command roles...</div>
+          
+          <details style="margin-top:10px;font-size:10px;color:var(--text-dim);">
+            <summary style="cursor:pointer;color:var(--cyan);margin-bottom:6px;">[ Advanced JSON Source ]</summary>
+            <textarea id="prof_roles" class="field-textarea" style="font-family:monospace;font-size:10px;height:70px;" onchange="syncJsonToRolesList()"></textarea>
+          </details>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span>ACCREDITATIONS &amp; CERTIFICATIONS</span>
+          <button type="button" onclick="openNewCertForm()" class="hud-btn hud-btn-gold">+ ADD CERTIFICATION</button>
+        </div>
+        <div class="panel-body">
+          <p style="font-size:11px;color:var(--text-dim);margin-bottom:12px;">Certificates, awards, and competition victories. Click "EVIDENCE" on any certification to upload certificates or link verified records.</p>
+          <div id="certificationsList" style="margin-bottom:14px;">Loading certifications...</div>
+          
+          <details style="margin-top:10px;font-size:10px;color:var(--text-dim);">
+            <summary style="cursor:pointer;color:var(--cyan);margin-bottom:6px;">[ Advanced JSON Source ]</summary>
+            <textarea id="prof_certs" class="field-textarea" style="font-family:monospace;font-size:10px;height:70px;" onchange="syncJsonToCertsList()"></textarea>
+          </details>
+        </div>
+      </div>
+
+      <button type="submit" class="hud-btn hud-btn-gold" style="width:100%;padding:12px;font-family:var(--orb);">[ TRANSMIT PROFILE UPDATE ]</button>
+    </form>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       TAB 2: MISSIONS / PROJECTS
+  ══════════════════════════════════════════════ -->
+  <div id="tab-projects" class="tab-content">
+    <div class="panel">
+      <div class="panel-head">
+        <span>MISSION LOGS REGISTRY</span>
+        <button type="button" onclick="openNewProjectForm()" class="hud-btn hud-btn-gold">+ NEW MISSION</button>
+      </div>
+      <div class="panel-body">
+        <div id="projectsList">Loading mission database...</div>
+      </div>
+    </div>
+
+    <!-- PROJECT EDITOR MODAL / FORM -->
+    <div id="projectFormPanel" class="panel" style="display:none;">
+      <div class="panel-head" id="projFormTitle">REGISTER NEW MISSION</div>
+      <div class="panel-body">
+        <form id="projectForm" onsubmit="saveProject(event)">
+          <input type="hidden" id="proj_id"/>
+          <div class="form-grid">
+            <div class="field-group">
+              <label class="field-label">MISSION TITLE</label>
+              <input type="text" id="proj_title" class="field-input" required/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">BADGE LABEL (e.g. ◆ COUNTY WINNER)</label>
+              <input type="text" id="proj_badge" class="field-input"/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">BADGE ACCENT THEME</label>
+              <select id="proj_badge_type" class="field-select">
+                <option value="badge-g">Gold Theme (badge-g)</option>
+                <option value="badge-c">Cyan Theme (badge-c)</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">DISPLAY ORDER</label>
+              <input type="number" id="proj_order" class="field-input" value="1"/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">LIVE APP URL</label>
+              <input type="url" id="proj_url" class="field-input" placeholder="https://..."/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">REPOSITORY URL</label>
+              <input type="url" id="proj_repo" class="field-input" placeholder="https://github.com/..."/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">VISIBILITY STATUS</label>
+              <select id="proj_visibility" class="field-select">
+                <option value="1">PUBLIC // VISIBLE</option>
+                <option value="0">CLASSIFIED // HIDDEN</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">PROJECT IMAGE</label>
+              <input type="file" accept="image/*" onchange="uploadAsset(this, 'proj_image')" style="font-size:10px;color:var(--text-dim);"/>
+              <input type="hidden" id="proj_image"/>
+              <div id="proj_image_preview"></div>
+            </div>
+          </div>
+
+          <div class="field-group form-full">
+            <label class="field-label">MISSION BRIEF / DESCRIPTION</label>
+            <textarea id="proj_desc" class="field-textarea" required></textarea>
+          </div>
+
+          <div style="display:flex;gap:10px;justify-content:space-between;align-items:center;margin-top:16px;">
+            <button type="button" id="projEvidenceBtn" class="hud-btn hud-btn-gold" style="display:none;">📁 ATTACH EVIDENCE &amp; PROOFS</button>
+            <div style="display:flex;gap:10px;margin-left:auto;">
+              <button type="button" onclick="closeProjectForm()" class="hud-btn">[ CANCEL ]</button>
+              <button type="submit" class="hud-btn hud-btn-gold">[ SAVE MISSION ]</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       TAB 3: CAPABILITY MATRIX & LIVE RADAR
+  ══════════════════════════════════════════════ -->
+  <div id="tab-skills" class="tab-content">
+    <div class="skills-layout">
+      <!-- LIVE RADAR PREVIEW -->
+      <div class="radar-box">
+        <div style="font-family:var(--orb);font-size:11px;color:var(--gold);letter-spacing:3px;margin-bottom:12px;">LIVE RADAR MATRIX</div>
+        <canvas id="liveRadarCanvas" width="280" height="280"></canvas>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:10px;letter-spacing:1px;">&gt; SYNCS LIVE WITH CAPABILITY METRICS</div>
+      </div>
+
+      <!-- SKILLS MANAGER -->
+      <div>
+        <div class="panel">
+          <div class="panel-head">
+            <span>REGISTERED CAPABILITIES</span>
+            <button type="button" onclick="openNewSkillForm()" class="hud-btn hud-btn-gold">+ NEW SKILL</button>
+          </div>
+          <div class="panel-body">
+            <div id="skillsList">Loading skills matrix...</div>
+          </div>
+        </div>
+
+        <!-- SKILL ADD/EDIT MODAL -->
+        <div id="skillFormPanel" class="panel" style="display:none;">
+          <div class="panel-head" id="skillFormTitle">ADD CAPABILITY</div>
+          <div class="panel-body">
+            <form id="skillForm" onsubmit="saveSkill(event)">
+              <input type="hidden" id="skill_id"/>
+              <div class="form-grid">
+                <div class="field-group">
+                  <label class="field-label">SKILL NAME</label>
+                  <input type="text" id="skill_name" class="field-input" required oninput="updateLiveRadar()"/>
+                </div>
+                <div class="field-group">
+                  <label class="field-label">RADAR LABEL (SHORT)</label>
+                  <input type="text" id="skill_radar_label" class="field-input" placeholder="e.g. Python" oninput="updateLiveRadar()"/>
+                </div>
+                <div class="field-group">
+                  <label class="field-label">PROFICIENCY: <span id="skill_prof_val" style="color:var(--gold);">80</span>%</label>
+                  <input type="range" id="skill_proficiency" min="5" max="100" value="80" class="field-input" oninput="document.getElementById('skill_prof_val').textContent=this.value;updateLiveRadar();"/>
+                </div>
+                <div class="field-group">
+                  <label class="field-label">CATEGORY</label>
+                  <select id="skill_category" class="field-select">
+                    <option value="frontend">Frontend Engineering</option>
+                    <option value="backend">Backend & Database</option>
+                    <option value="robotics">Robotics & Embedded</option>
+                    <option value="hardware">Hardware & Circuits</option>
+                    <option value="tools">Dev Tools / VCS</option>
+                    <option value="security">Cyber Security</option>
+                    <option value="ai">AI / Machine Learning</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label class="field-label">INCLUDE IN 6-8 RADAR CHART?</label>
+                  <select id="skill_is_radar" class="field-select" onchange="updateLiveRadar()">
+                    <option value="1">YES // RADAR DIMENSION</option>
+                    <option value="0">NO // BREAKDOWN LIST ONLY</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label class="field-label">DISPLAY ORDER</label>
+                  <input type="number" id="skill_order" class="field-input" value="1"/>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button type="button" onclick="closeSkillForm()" class="hud-btn">[ CANCEL ]</button>
+                <button type="submit" class="hud-btn hud-btn-gold">[ SAVE CAPABILITY ]</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       TAB 4: SEO & SITE IDENTITY SETTINGS
+  ══════════════════════════════════════════════ -->
+  <div id="tab-seo" class="tab-content">
+    <form id="seoSettingsForm" onsubmit="saveSeoSettings(event)">
+      <div class="panel">
+        <div class="panel-head">
+          <span>GLOBAL SITE IDENTITY &amp; SEARCH ENGINE METADATA</span>
+          <span style="font-size:10px;color:var(--cyan);">&gt; AUTHORITATIVE DATABASE CONFIGURATION</span>
+        </div>
+        <div class="panel-body">
+          <p style="font-size:11px;color:var(--text-dim);margin-bottom:16px;line-height:1.6;">
+            Manage website title, meta tags, favicon icon, social sharing cards (Open Graph / Twitter), canonical domain, and indexing policies dynamically. Changes immediately update public HTML, dynamic routes, robots.txt, and sitemap.xml.
+          </p>
+
+          <div class="form-grid">
+            <div class="field-group">
+              <label class="field-label">SITE TITLE (&lt;title&gt; &amp; og:title)</label>
+              <input type="text" id="seo_title" class="field-input" placeholder="Jeycyn.Jeff || DEV-001" required oninput="updateSeoPreviews()"/>
+              <div style="font-size:10px;color:var(--text-dim);margin-top:4px;">Recommended length: 50–60 characters. Character count: <span id="seo_title_count" style="color:var(--gold);">0</span></div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">CANONICAL BASE URL (&lt;link rel="canonical"&gt;)</label>
+              <input type="url" id="seo_canonical" class="field-input" placeholder="https://jeycyn.dev" oninput="updateSeoPreviews()"/>
+              <div style="font-size:10px;color:var(--text-dim);margin-top:4px;">Primary public origin for sitemaps and absolute sharing URLs.</div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">ROBOTS &amp; INDEXING POLICY</label>
+              <select id="seo_robots" class="field-select" onchange="updateSeoPreviews()">
+                <option value="index, follow">index, follow (Standard Public Indexing)</option>
+                <option value="noindex, follow">noindex, follow (Hide From Search, Crawl Links)</option>
+                <option value="noindex, nofollow">noindex, nofollow (Strictly Classified / Unlisted)</option>
+                <option value="index, nofollow">index, nofollow (Index Page Only)</option>
+              </select>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">DYNAMIC SITEMAP &amp; ROBOTS</label>
+              <div style="display:flex;gap:10px;margin-top:6px;">
+                <a href="/robots.txt" target="_blank" class="hud-btn" style="font-size:10px;padding:6px 10px;">[ ↗ VIEW ROBOTS.TXT ]</a>
+                <a href="/sitemap.xml" target="_blank" class="hud-btn hud-btn-cyan" style="font-size:10px;padding:6px 10px;">[ ↗ VIEW SITEMAP.XML ]</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-group form-full" style="margin-top:12px;">
+            <label class="field-label">META DESCRIPTION (&lt;meta name="description"&gt; &amp; og:description)</label>
+            <textarea id="seo_desc" class="field-textarea" style="min-height:75px;" placeholder="Brief summary of operator capabilities, projects, and systems..." required oninput="updateSeoPreviews()"></textarea>
+            <div style="font-size:10px;color:var(--text-dim);margin-top:4px;">Recommended length: 140–160 characters. Character count: <span id="seo_desc_count" style="color:var(--gold);">0</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ASSET UPLOADS: FAVICON & SOCIAL SHARE IMAGE -->
+      <div class="panel">
+        <div class="panel-head">FAVICON &amp; SOCIAL SHARE IMAGES</div>
+        <div class="panel-body">
+          <div class="form-grid">
+            <div class="field-group">
+              <label class="field-label">FAVICON ICON (.ico, .png, .svg)</label>
+              <input type="file" accept=".ico,.png,.svg,.jpg,.webp" onchange="uploadSeoAsset(this, 'seo_favicon')" style="font-size:10px;color:var(--text-dim);"/>
+              <input type="text" id="seo_favicon" class="field-input" placeholder="/uploads/favicon.ico or URL" style="margin-top:6px;" oninput="updateSeoPreviews()"/>
+              <div id="seo_favicon_preview" style="margin-top:6px;display:flex;align-items:center;gap:8px;">
+                <img id="seo_fav_img_preview" src="/favicon.ico" alt="Favicon" style="width:24px;height:24px;border:1px solid var(--gold);padding:2px;background:var(--navy);border-radius:3px;"/>
+                <span style="font-size:10px;color:var(--text-dim);">Live Favicon Preview</span>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">SOCIAL SHARING IMAGE (og:image / twitter:image)</label>
+              <input type="file" accept="image/*" onchange="uploadSeoAsset(this, 'seo_social_img')" style="font-size:10px;color:var(--text-dim);"/>
+              <input type="text" id="seo_social_img" class="field-input" placeholder="/uploads/social_card.png or URL" style="margin-top:6px;" oninput="updateSeoPreviews()"/>
+              <div id="seo_social_preview_wrap" style="margin-top:6px;">
+                <div id="seo_social_preview" style="font-size:10px;color:var(--text-dim);">Upload or specify image for link previews (1200x630 recommended).</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LIVE SERP & SOCIAL PREVIEWS -->
+      <div class="panel">
+        <div class="panel-head">
+          <span>LIVE SEARCH ENGINE &amp; SOCIAL SHARE PREVIEW</span>
+          <span style="font-size:10px;color:var(--gold-bright);">&gt; REAL-TIME VISUALIZATION</span>
+        </div>
+        <div class="panel-body">
+          <div class="form-grid">
+            <!-- Google Search Snippet Preview -->
+            <div>
+              <div style="font-family:var(--orb);font-size:11px;color:var(--cyan);letter-spacing:1px;margin-bottom:6px;">GOOGLE SEARCH RESULT PREVIEW</div>
+              <div class="seo-preview-box">
+                <div class="seo-preview-url-row">
+                  <img id="serpFavicon" src="/favicon.ico" class="seo-preview-favicon" alt="Site icon"/>
+                  <div>
+                    <div id="serpSiteName" class="seo-preview-site-name">Jeycyn.Jeff</div>
+                    <div id="serpUrl" class="seo-preview-url">https://jeycyn.dev</div>
+                  </div>
+                </div>
+                <div id="serpTitle" class="seo-preview-title">Jeycyn.Jeff || DEV-001</div>
+                <div id="serpDesc" class="seo-preview-desc">Innovative software developer, robotics engineer, and AI systems builder based in Eldoret, Kenya. Founder of Scarlet Tech Wizards.</div>
+              </div>
+            </div>
+
+            <!-- Social Card Preview (OpenGraph / Twitter) -->
+            <div>
+              <div style="font-family:var(--orb);font-size:11px;color:var(--gold);letter-spacing:1px;margin-bottom:6px;">SOCIAL SHARE CARD PREVIEW</div>
+              <div class="social-preview-card">
+                <div class="social-preview-img-wrap">
+                  <img id="socCardImg" src="" class="social-preview-img" style="display:none;" alt="Social Banner"/>
+                  <div id="socCardPlaceholder" style="font-size:11px;color:#8899a6;display:flex;flex-direction:column;align-items:center;gap:6px;">
+                    <span>🖼️</span>
+                    <span>1200 × 630 SOCIAL PREVIEW BANNER</span>
+                  </div>
+                </div>
+                <div class="social-preview-body">
+                  <div id="socCardDomain" class="social-preview-domain">JEYCYN.DEV</div>
+                  <div id="socCardTitle" class="social-preview-title">Jeycyn.Jeff || DEV-001</div>
+                  <div id="socCardDesc" class="social-preview-desc">Innovative software developer, robotics engineer, and AI systems builder based in Eldoret, Kenya.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" id="seoSaveBtn" class="hud-btn hud-btn-gold" style="width:100%;padding:12px;font-family:var(--orb);">[ TRANSMIT &amp; PERSIST SEO IDENTITY ]</button>
+    </form>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       TAB 5: SECURITY CIPHER & CREDENTIALS
+  ══════════════════════════════════════════════ -->
+  <div id="tab-security" class="tab-content">
+    <div class="panel">
+      <div class="panel-head">OPERATOR ACCESS CREDENTIALS & CIPHER REKEY</div>
+      <div class="panel-body" style="max-width:550px;">
+        <p style="font-size:11px;color:var(--text-dim);margin-bottom:18px;line-height:1.6;">
+          Update your administrative callsign (username) and master access cipher (password). Current access cipher confirmation is required to authorize modifications. Previous extraneous sessions will be revoked.
+        </p>
+        <form onsubmit="handleCredentialsUpdate(event)">
+          <div class="field-group">
+            <label class="field-label">OPERATOR CALLSIGN / USERNAME</label>
+            <input type="text" id="admin_username" class="field-input" placeholder="admin" required autocomplete="username"/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">CURRENT ACCESS CIPHER (REQUIRED FOR CONFIRMATION)</label>
+            <input type="password" id="curr_pass" class="field-input" placeholder="Enter current master password..." required autocomplete="current-password"/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">NEW ACCESS CIPHER (LEAVE BLANK TO RETAIN CURRENT)</label>
+            <input type="password" id="new_pass" class="field-input" placeholder="Enter new password (min 6 chars)..." autocomplete="new-password"/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">CONFIRM NEW ACCESS CIPHER</label>
+            <input type="password" id="confirm_pass" class="field-input" placeholder="Confirm new password..." autocomplete="new-password"/>
+          </div>
+          <button type="submit" class="hud-btn hud-btn-gold">[ REKEY OPERATOR CREDENTIALS ]</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       TAB 5: GATEWAY MATRIX CONTROL
+  ══════════════════════════════════════════════ -->
+  <div id="tab-gateway" class="tab-content">
+    <div class="panel">
+      <div class="panel-head">
+        <span>SECURITY GATEWAY // PUZZLE & CIPHER ARCHITECTURE</span>
+        <span style="font-size:10px;color:var(--cyan);letter-spacing:1px;">STATUS: ACTIVE PROTECTION LAYER</span>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:11px;color:var(--text-dim);margin-bottom:16px;line-height:1.6;">
+          Configure the pre-authentication security barrier. Visitors must solve the sliding-tile rune matrix and authenticate with the hashed gateway cipher key before accessing the terminal login.
+        </p>
+
+        <form id="gatewayConfigForm" onsubmit="handleGatewayPublish(event)">
+          <div class="form-grid">
+            <div class="field-group">
+              <label class="field-label">GRID MATRIX SIZE</label>
+              <select id="gw_grid_size" class="field-select" onchange="updateGatewayPreviewState()">
+                <option value="3">3 x 3 MATRIX (8 RUNES + 1 EMPTY NODE)</option>
+                <option value="4">4 x 4 MATRIX (15 RUNES + 1 EMPTY NODE)</option>
+              </select>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">SET NEW GATEWAY PASSCODE (WRITE-ONLY)</label>
+              <input type="password" id="gw_new_passcode" class="field-input" placeholder="Leave empty to retain active cipher key"/>
+            </div>
+          </div>
+
+          <div class="field-group form-full">
+            <label class="field-label">RUNE SYMBOLS (JSON ARRAY)</label>
+            <textarea id="gw_symbols" class="field-textarea" style="height:60px;font-family:var(--mono);" placeholder='["ᚠ", "ᚢ", "ᚦ", "ᚨ", "ᚱ", "ᚲ", "ᚷ", "ᚹ"]'></textarea>
+          </div>
+
+          <div class="form-grid">
+            <div class="field-group">
+              <label class="field-label">TARGET SOLUTION SEQUENCE (JSON ARRAY)</label>
+              <textarea id="gw_solution" class="field-textarea" style="height:70px;font-family:var(--mono);" placeholder='[0, 1, 2, 3, 4, 5, 6, 7, null]'></textarea>
+            </div>
+            <div class="field-group">
+              <label class="field-label">INITIAL SCRAMBLE LAYOUT (JSON ARRAY)</label>
+              <textarea id="gw_initial_scramble" class="field-textarea" style="height:70px;font-family:var(--mono);" placeholder='[3, 0, 2, 6, 1, 4, 7, null, 5]'></textarea>
+            </div>
+          </div>
+
+          <div class="field-group form-full">
+            <label class="field-label">AUDIT CHANGELOG NOTE</label>
+            <input type="text" id="gw_update_note" class="field-input" placeholder="e.g. Updated rune symbols and scrambled layout"/>
+          </div>
+
+          <div style="margin-top:20px;padding:12px 16px;background:rgba(2,12,27,0.7);border:1px solid rgba(79,195,247,0.25);border-radius:2px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <div style="font-size:11px;color:var(--text-dim);">
+              <span style="color:var(--gold-bright);font-weight:bold;">WORKFLOW SAFETY:</span> Changes are saved to rollback history. Test configuration before publishing live.
+            </div>
+            <div style="display:flex;gap:10px;">
+              <button type="button" onclick="openGatewayPreviewModal()" class="hud-btn hud-btn-cyan">👁 PREVIEW & TEST AS VISITOR</button>
+              <button type="button" onclick="handleGatewayResetDefault()" class="hud-btn hud-btn-red">⟲ RESET TO DEFAULT</button>
+              <button type="submit" class="hud-btn hud-btn-gold">◆ PUBLISH CHANGES LIVE</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ROLLBACK HISTORY PANEL -->
+    <div class="panel">
+      <div class="panel-head">
+        <span>CONFIG ROLLBACK ARCHIVE</span>
+        <button type="button" onclick="loadGatewayHistory()" class="hud-btn" style="font-size:10px;padding:3px 8px;">REFRESH HISTORY</button>
+      </div>
+      <div class="panel-body">
+        <div id="gwHistoryList">Loading rollback history...</div>
+      </div>
+    </div>
+
+    <!-- AUDIT LOGS PANEL -->
+    <div class="panel">
+      <div class="panel-head">
+        <span>GATEWAY SECURITY AUDIT TRAIL</span>
+        <button type="button" onclick="loadGatewayAuditLogs()" class="hud-btn" style="font-size:10px;padding:3px 8px;">REFRESH LOGS</button>
+      </div>
+      <div class="panel-body">
+        <div id="gwAuditLogsList">Loading security audit records...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GATEWAY PREVIEW MODAL -->
+  <div id="gwPreviewModal" style="display:none;position:fixed;inset:0;background:rgba(2,12,27,0.85);z-index:9999;backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px;">
+    <div class="panel" style="width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 0 40px rgba(0,0,0,0.9),0 0 20px rgba(79,195,247,0.2);border-color:var(--cyan);">
+      <div class="panel-head" style="background:rgba(79,195,247,0.1);border-bottom-color:var(--cyan-dim);display:flex;justify-content:space-between;align-items:center;">
+        <span style="color:var(--cyan);">TEST SANDBOX: PREVIEW AS VISITOR</span>
+        <button type="button" onclick="closeGatewayPreviewModal()" class="hud-btn hud-btn-red" style="padding:2px 8px;">[ CLOSE ✕ ]</button>
+      </div>
+      <div class="panel-body" style="text-align:center;">
+        <p style="font-size:11px;color:var(--text-dim);margin-bottom:14px;">Interactive visitor test of draft configuration. Solved tiles and cipher verification are tested locally against your draft settings.</p>
+        
+        <div id="modalPreviewBoard" style="display:inline-grid;gap:8px;background:rgba(2,12,27,0.9);padding:14px;border:2px solid var(--stone-border);border-radius:6px;margin:0 auto 16px auto;"></div>
+        
+        <div style="display:flex;gap:10px;justify-content:center;margin-bottom:14px;">
+          <button type="button" onclick="resetModalPreviewTiles()" class="hud-btn">⟲ RESET TEST TILES</button>
+          <button type="button" onclick="testModalPreviewPuzzle()" class="hud-btn hud-btn-cyan">◆ TEST PUZZLE CHECK</button>
+        </div>
+
+        <div id="modalPreviewStatus" style="font-size:11px;letter-spacing:1px;padding:8px 12px;border-radius:3px;margin-bottom:10px;display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMMAND ROLE EDITOR MODAL -->
+  <div id="roleFormModal" class="evidence-modal-overlay" style="display:none;" onclick="handleOverlayClick(event, 'roleFormModal', closeRoleForm)">
+    <div class="evidence-modal-box" style="max-width:560px;">
+      <div class="evidence-modal-header">
+        <div class="evidence-modal-title" id="roleModalTitle">COMMAND ROLE DETAILS</div>
+        <button type="button" class="hud-btn hud-btn-red" onclick="closeRoleForm()">[ ✕ ]</button>
+      </div>
+      <div class="evidence-modal-body">
+        <form id="roleForm" onsubmit="saveRoleForm(event)">
+          <input type="hidden" id="rf_index"/>
+          <input type="hidden" id="rf_id"/>
+          <div class="field-group">
+            <label class="field-label">ROLE / LEADERSHIP TITLE</label>
+            <input type="text" id="rf_title" class="field-input" placeholder="e.g. SCIENCE FAIR CLUB" required/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">SUBTITLE / ORGANIZATION</label>
+            <input type="text" id="rf_subtitle" class="field-input" placeholder="e.g. Leader · Wareng High School"/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">DISPLAY ORDER</label>
+            <input type="number" id="rf_order" class="field-input" value="1"/>
+          </div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+            <button type="button" onclick="closeRoleForm()" class="hud-btn">[ CANCEL ]</button>
+            <button type="submit" class="hud-btn hud-btn-gold">[ SAVE ROLE ]</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- CERTIFICATION EDITOR MODAL -->
+  <div id="certFormModal" class="evidence-modal-overlay" style="display:none;" onclick="handleOverlayClick(event, 'certFormModal', closeCertForm)">
+    <div class="evidence-modal-box" style="max-width:560px;">
+      <div class="evidence-modal-header">
+        <div class="evidence-modal-title" id="certModalTitle">CERTIFICATION / AWARD DETAILS</div>
+        <button type="button" class="hud-btn hud-btn-red" onclick="closeCertForm()">[ ✕ ]</button>
+      </div>
+      <div class="evidence-modal-body">
+        <form id="certForm" onsubmit="saveCertForm(event)">
+          <input type="hidden" id="cf_index"/>
+          <input type="hidden" id="cf_id"/>
+          <div class="field-group">
+            <label class="field-label">CERTIFICATION / HONOR TITLE</label>
+            <input type="text" id="cf_title" class="field-input" placeholder="e.g. CODEJIKA PROJECT" required/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">SUBTITLE / ISSUER &amp; YEAR</label>
+            <input type="text" id="cf_subtitle" class="field-input" placeholder="e.g. Certificate of completion in HTML / CSS · 2024"/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">DISPLAY ORDER</label>
+            <input type="number" id="cf_order" class="field-input" value="1"/>
+          </div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+            <button type="button" onclick="closeCertForm()" class="hud-btn">[ CANCEL ]</button>
+            <button type="submit" class="hud-btn hud-btn-gold">[ SAVE CERTIFICATION ]</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- EVIDENCE & PROOF MANAGER MODAL -->
+  <div id="evidenceManagerModal" class="evidence-modal-overlay" style="display:none;" onclick="handleOverlayClick(event, 'evidenceManagerModal', closeEvidenceManager)">
+    <div class="evidence-modal-box">
+      <div class="evidence-modal-header">
+        <div class="evidence-modal-title" id="evMgrTitle">MANAGE PROOF &amp; EVIDENCE ARTIFACTS</div>
+        <button type="button" class="hud-btn hud-btn-red" onclick="closeEvidenceManager()">[ ✕ CLOSE ]</button>
+      </div>
+      <div class="evidence-modal-body">
+        <div id="evMgrSubtitle" style="font-size:11px;color:var(--cyan);margin-bottom:16px;letter-spacing:1px;"></div>
+
+        <!-- ATTACH EVIDENCE FORM -->
+        <div class="panel" style="margin-bottom:20px;background:rgba(2,12,27,0.95);border-color:var(--gold-dim);">
+          <div class="panel-head">
+            <span id="evFormTitle">+ ATTACH EVIDENCE / PROOF ARTIFACT</span>
+          </div>
+          <div class="panel-body">
+            <form id="evidenceForm" onsubmit="saveEvidenceItem(event)">
+              <input type="hidden" id="ev_id"/>
+              <div class="form-grid">
+                <div class="field-group">
+                  <label class="field-label">ARTIFACT TITLE</label>
+                  <input type="text" id="ev_title" class="field-input" placeholder="e.g. County Championship Certificate" required/>
+                </div>
+                <div class="field-group">
+                  <label class="field-label">ARTIFACT TYPE</label>
+                  <select id="ev_type" class="field-select">
+                    <option value="link">Verified Link / Live Web (link)</option>
+                    <option value="article">Press / News Article (article)</option>
+                    <option value="document">PDF / Official Document (document)</option>
+                    <option value="image">Certificate Photo / Image (image)</option>
+                    <option value="video">Demonstration / Recording (video)</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label class="field-label">SOURCE / ISSUER LABEL</label>
+                  <input type="text" id="ev_source_label" class="field-input" placeholder="e.g. Kenya Science &amp; Engineering Fair"/>
+                </div>
+                <div class="field-group">
+                  <label class="field-label">VERIFIED URL (OPTIONAL)</label>
+                  <input type="url" id="ev_url" class="field-input" placeholder="https://..."/>
+                </div>
+                <div class="field-group">
+                  <label class="field-label">UPLOAD DOCUMENT / IMAGE (OPTIONAL)</label>
+                  <input type="file" id="ev_file_input" onchange="uploadEvidenceFile(this)" style="font-size:10px;color:var(--text-dim);"/>
+                  <input type="hidden" id="ev_file_path"/>
+                  <div id="ev_file_preview" style="font-size:10px;color:var(--gold);margin-top:4px;"></div>
+                </div>
+                <div class="field-group">
+                  <label class="field-label">DISPLAY ORDER</label>
+                  <input type="number" id="ev_order" class="field-input" value="1"/>
+                </div>
+              </div>
+              <div class="field-group form-full">
+                <label class="field-label">DESCRIPTION / CONTEXT NOTE</label>
+                <textarea id="ev_description" class="field-textarea" style="min-height:60px;" placeholder="Brief context or summary of this evidence..."></textarea>
+              </div>
+              <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button type="button" id="evCancelBtn" onclick="resetEvidenceForm()" class="hud-btn" style="display:none;">[ CANCEL EDIT ]</button>
+                <button type="submit" class="hud-btn hud-btn-gold" id="evSubmitBtn">[ ATTACH PROOF RECORD ]</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- ATTACHED EVIDENCE LIST -->
+        <div class="panel">
+          <div class="panel-head">
+            <span>ATTACHED PROOF RECORDS</span>
+            <span id="evCountBadge" style="font-size:10px;color:var(--gold);">0 ITEMS</span>
+          </div>
+          <div class="panel-body">
+            <div id="evItemsList">Loading artifacts...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Transparent Auth Interceptor for API calls
+const nativeFetch = window.fetch;
+window.fetch = function(url, options = {}) {
+  options = options || {};
+  options.credentials = options.credentials || 'include';
+  const token = sessionStorage.getItem('admin_token') || localStorage.getItem('admin_token');
+  if (token) {
+    options.headers = options.headers || {};
+    if (options.headers instanceof Headers) {
+      if (!options.headers.has('Authorization')) {
+        options.headers.append('Authorization', 'Bearer ' + token);
+      }
+    } else if (Array.isArray(options.headers)) {
+      options.headers.push(['Authorization', 'Bearer ' + token]);
+    } else {
+      options.headers['Authorization'] = options.headers['Authorization'] || ('Bearer ' + token);
+    }
+  }
+  return nativeFetch(url, options).then(res => {
+    if (res.status === 401 && typeof url === 'string' && (url.startsWith('/api/admin') || url.startsWith('/api/profile') || url.startsWith('/api/projects') || url.startsWith('/api/skills') || url.startsWith('/api/upload'))) {
+      sessionStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_token');
+      window.location.href = '/gateway';
+    }
+    return res;
+  });
+};
+
+let currentProfile = {};
+let currentProjects = [];
+let currentSkills = [];
+let activeEvidenceTarget = null;
+let currentEvidenceItems = [];
+
+function setTermLog(msg) {
+  const el = document.getElementById('termLog');
+  el.innerHTML = '&gt; ' + msg;
+}
+
+function handleOverlayClick(e, modalId, closeFn) {
+  if (e.target.id === modalId && typeof closeFn === 'function') {
+    closeFn();
+  }
+}
+
+function switchCmsTab(btn, tabId) {
+  document.querySelectorAll('.cms-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  const target = document.getElementById(tabId);
+  if (target) target.classList.add('active');
+  if (tabId === 'tab-skills') updateLiveRadar();
+}
+
+async function handleLogout() {
+  const token = sessionStorage.getItem('admin_token') || localStorage.getItem('admin_token');
+  try {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': 'Bearer ' + token } : {})
+      }
+    });
+  } catch (e) {}
+  sessionStorage.removeItem('admin_token');
+  localStorage.removeItem('admin_token');
+  sessionStorage.removeItem('gateway_clearance_token');
+  sessionStorage.removeItem('gateway_puzzle_token');
+  window.location.href = '/gateway';
+}
+
+function getAdminAuthToken() {
+  return sessionStorage.getItem('admin_token') || localStorage.getItem('admin_token') || '';
+}
+
+function getAdminAuthHeaders(extraHeaders = {}) {
+  const token = getAdminAuthToken();
+  const headers = {
+    'X-Requested-With': 'XMLHttpRequest',
+    ...extraHeaders
+  };
+  if (token) {
+    headers['Authorization'] = 'Bearer ' + token;
+  }
+  return headers;
+}
+
+/* ══════════════════════════════════════════════
+   ASSET UPLOADER
+══════════════════════════════════════════════ */
+async function uploadAsset(input, targetHiddenId) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const formData = new FormData();
+  formData.append('file', file);
+
+  setTermLog('UPLOADING & COMPRESSING ASSET: ' + file.name + '...');
+
+  try {
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      credentials: 'include',
+      headers: getAdminAuthHeaders(),
+      body: formData
+    });
+    const data = await res.json();
+    if (res.ok && data.url) {
+      document.getElementById(targetHiddenId).value = data.url;
+      const prevDiv = document.getElementById(targetHiddenId + '_preview');
+      if (prevDiv) {
+        prevDiv.innerHTML = `<img src="${data.url}" class="preview-thumb" alt="Preview"/>`;
+      }
+      setTermLog('ASSET STORED & OPTIMIZED: ' + data.url);
+    } else {
+      setTermLog('UPLOAD FAILED: ' + (data.error || 'Server error'));
+    }
+  } catch (err) {
+    setTermLog('UPLOAD ERROR: ' + err.message);
+  }
+}
+
+/* ══════════════════════════════════════════════
+   PROFILE LOGIC & ROLES / CERTS MANAGERS
+══════════════════════════════════════════════ */
+async function loadProfile() {
+  try {
+    const res = await fetch('/api/profile');
+    const p = await res.json();
+    currentProfile = p;
+
+    document.getElementById('prof_name').value = p.name || '';
+    document.getElementById('prof_callsign').value = p.callsign || '';
+    document.getElementById('prof_secondary').value = p.secondary_handle || '';
+    document.getElementById('prof_location').value = p.location || '';
+    document.getElementById('prof_status').value = p.status || '';
+    document.getElementById('prof_tagline').value = p.tagline || '';
+    document.getElementById('prof_bio').value = p.bio || '';
+    document.getElementById('prof_photo').value = p.photo_path || '';
+    if (p.photo_path) {
+      document.getElementById('prof_photo_preview').innerHTML = `<img src="${p.photo_path}" class="preview-thumb"/>`;
+    }
+
+    document.getElementById('prof_stat_wins').value = p.stat_wins || '';
+    document.getElementById('prof_stat_clubs').value = p.stat_clubs || '';
+    document.getElementById('prof_stat_drive').value = p.stat_drive || '';
+
+    document.getElementById('prof_email').value = p.contact_email || '';
+    document.getElementById('prof_github').value = p.contact_github || '';
+    document.getElementById('prof_linkedin').value = p.contact_linkedin || '';
+    document.getElementById('prof_website').value = p.contact_website || '';
+
+    document.getElementById('prof_roles').value = JSON.stringify(p.command_roles || [], null, 2);
+    document.getElementById('prof_certs').value = JSON.stringify(p.certifications || [], null, 2);
+
+    renderRolesList();
+    renderCertsList();
+  } catch (err) {
+    setTermLog('ERROR FETCHING PROFILE: ' + err.message);
+  }
+}
+
+function renderRolesList() {
+  const container = document.getElementById('commandRolesList');
+  if (!container) return;
+  const roles = currentProfile.command_roles || [];
+  if (!roles.length) {
+    container.innerHTML = '<div style="color:var(--text-dim);font-size:11px;">No command roles registered. Click "+ ADD COMMAND ROLE" to register leadership experience.</div>';
+    return;
+  }
+
+  container.innerHTML = roles.map((r, idx) => {
+    const evCount = (r.evidence && r.evidence.length) || 0;
+    const targetId = r.id !== undefined && r.id !== null ? r.id : (idx + 1);
+    return `
+      <div class="item-card" style="margin-bottom:8px;padding:12px 14px;">
+        <div class="item-info">
+          <div class="item-title" style="font-size:12px;">${escapeHTML(r.title || 'UNTITLED ROLE')}</div>
+          <div class="item-sub" style="font-size:11px;">${escapeHTML(r.subtitle || '')}</div>
+        </div>
+        <div class="item-ctrls">
+          <button type="button" onclick="openEvidenceManager('role', ${targetId}, '${escapeHTML(r.title || 'Role')}')" class="hud-btn hud-btn-gold" style="font-size:10px;padding:4px 8px;">
+            📁 EVIDENCE (${evCount})
+          </button>
+          <button type="button" onclick="openEditRoleForm(${idx})" class="hud-btn" style="font-size:10px;padding:4px 8px;">[ EDIT ]</button>
+          <button type="button" onclick="deleteRole(${idx})" class="hud-btn hud-btn-red" style="font-size:10px;padding:4px 8px;">[ DEL ]</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderCertsList() {
+  const container = document.getElementById('certificationsList');
+  if (!container) return;
+  const certs = currentProfile.certifications || [];
+  if (!certs.length) {
+    container.innerHTML = '<div style="color:var(--text-dim);font-size:11px;">No certifications registered. Click "+ ADD CERTIFICATION" to register accreditations.</div>';
+    return;
+  }
+
+  container.innerHTML = certs.map((c, idx) => {
+    const evCount = (c.evidence && c.evidence.length) || 0;
+    const targetId = c.id !== undefined && c.id !== null ? c.id : (idx + 1);
+    return `
+      <div class="item-card" style="margin-bottom:8px;padding:12px 14px;">
+        <div class="item-info">
+          <div class="item-title" style="font-size:12px;">${escapeHTML(c.title || 'UNTITLED CERTIFICATION')}</div>
+          <div class="item-sub" style="font-size:11px;">${escapeHTML(c.subtitle || '')}</div>
+        </div>
+        <div class="item-ctrls">
+          <button type="button" onclick="openEvidenceManager('cert', ${targetId}, '${escapeHTML(c.title || 'Certification')}')" class="hud-btn hud-btn-gold" style="font-size:10px;padding:4px 8px;">
+            📁 EVIDENCE (${evCount})
+          </button>
+          <button type="button" onclick="openEditCertForm(${idx})" class="hud-btn" style="font-size:10px;padding:4px 8px;">[ EDIT ]</button>
+          <button type="button" onclick="deleteCert(${idx})" class="hud-btn hud-btn-red" style="font-size:10px;padding:4px 8px;">[ DEL ]</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function syncJsonToRolesList() {
+  try {
+    const val = document.getElementById('prof_roles').value;
+    const parsed = JSON.parse(val || '[]');
+    currentProfile.command_roles = Array.isArray(parsed) ? parsed : [parsed];
+    renderRolesList();
+  } catch (e) {}
+}
+
+function syncJsonToCertsList() {
+  try {
+    const val = document.getElementById('prof_certs').value;
+    const parsed = JSON.parse(val || '[]');
+    currentProfile.certifications = Array.isArray(parsed) ? parsed : [parsed];
+    renderCertsList();
+  } catch (e) {}
+}
+
+function openNewRoleForm() {
+  document.getElementById('roleForm').reset();
+  document.getElementById('rf_index').value = '-1';
+  document.getElementById('rf_id').value = '';
+  document.getElementById('rf_order').value = ((currentProfile.command_roles || []).length + 1);
+  document.getElementById('roleModalTitle').textContent = 'ADD COMMAND ROLE';
+  document.getElementById('roleFormModal').style.display = 'flex';
+}
+
+function openEditRoleForm(idx) {
+  const roles = currentProfile.command_roles || [];
+  const r = roles[idx];
+  if (!r) return;
+  document.getElementById('rf_index').value = idx;
+  document.getElementById('rf_id').value = r.id || '';
+  document.getElementById('rf_title').value = r.title || '';
+  document.getElementById('rf_subtitle').value = r.subtitle || '';
+  document.getElementById('rf_order').value = r.display_order || (idx + 1);
+  document.getElementById('roleModalTitle').textContent = 'EDIT COMMAND ROLE: ' + (r.title || '');
+  document.getElementById('roleFormModal').style.display = 'flex';
+}
+
+function closeRoleForm() {
+  document.getElementById('roleFormModal').style.display = 'none';
+}
+
+async function saveRoleForm(e) {
+  e.preventDefault();
+  const idx = parseInt(document.getElementById('rf_index').value, 10);
+  const roles = [...(currentProfile.command_roles || [])];
+  const roleObj = {
+    title: document.getElementById('rf_title').value.trim(),
+    subtitle: document.getElementById('rf_subtitle').value.trim(),
+    display_order: parseInt(document.getElementById('rf_order').value, 10) || 1
+  };
+  const roleId = document.getElementById('rf_id').value;
+  if (roleId) roleObj.id = parseInt(roleId, 10);
+
+  if (idx >= 0 && idx < roles.length) {
+    if (roles[idx].evidence) roleObj.evidence = roles[idx].evidence;
+    if (roles[idx].id) roleObj.id = roles[idx].id;
+    roles[idx] = roleObj;
+  } else {
+    roleObj.id = roles.length + 1;
+    roles.push(roleObj);
+  }
+
+  currentProfile.command_roles = roles;
+  document.getElementById('prof_roles').value = JSON.stringify(roles, null, 2);
+  renderRolesList();
+  closeRoleForm();
+  setTermLog('&gt; COMMAND ROLE STAGED. TRANSMIT PROFILE UPDATE TO PERSIST.');
+}
+
+function deleteRole(idx) {
+  const roles = [...(currentProfile.command_roles || [])];
+  if (!roles[idx]) return;
+  if (!confirm(`Remove command role "${roles[idx].title}"?`)) return;
+  roles.splice(idx, 1);
+  currentProfile.command_roles = roles;
+  document.getElementById('prof_roles').value = JSON.stringify(roles, null, 2);
+  renderRolesList();
+  setTermLog('&gt; COMMAND ROLE REMOVED. TRANSMIT PROFILE UPDATE TO PERSIST.');
+}
+
+function openNewCertForm() {
+  document.getElementById('certForm').reset();
+  document.getElementById('cf_index').value = '-1';
+  document.getElementById('cf_id').value = '';
+  document.getElementById('cf_order').value = ((currentProfile.certifications || []).length + 1);
+  document.getElementById('certModalTitle').textContent = 'ADD CERTIFICATION';
+  document.getElementById('certFormModal').style.display = 'flex';
+}
+
+function openEditCertForm(idx) {
+  const certs = currentProfile.certifications || [];
+  const c = certs[idx];
+  if (!c) return;
+  document.getElementById('cf_index').value = idx;
+  document.getElementById('cf_id').value = c.id || '';
+  document.getElementById('cf_title').value = c.title || '';
+  document.getElementById('cf_subtitle').value = c.subtitle || '';
+  document.getElementById('cf_order').value = c.display_order || (idx + 1);
+  document.getElementById('certModalTitle').textContent = 'EDIT CERTIFICATION: ' + (c.title || '');
+  document.getElementById('certFormModal').style.display = 'flex';
+}
+
+function closeCertForm() {
+  document.getElementById('certFormModal').style.display = 'none';
+}
+
+async function saveCertForm(e) {
+  e.preventDefault();
+  const idx = parseInt(document.getElementById('cf_index').value, 10);
+  const certs = [...(currentProfile.certifications || [])];
+  const certObj = {
+    title: document.getElementById('cf_title').value.trim(),
+    subtitle: document.getElementById('cf_subtitle').value.trim(),
+    display_order: parseInt(document.getElementById('cf_order').value, 10) || 1
+  };
+  const certId = document.getElementById('cf_id').value;
+  if (certId) certObj.id = parseInt(certId, 10);
+
+  if (idx >= 0 && idx < certs.length) {
+    if (certs[idx].evidence) certObj.evidence = certs[idx].evidence;
+    if (certs[idx].id) certObj.id = certs[idx].id;
+    certs[idx] = certObj;
+  } else {
+    certObj.id = certs.length + 1;
+    certs.push(certObj);
+  }
+
+  currentProfile.certifications = certs;
+  document.getElementById('prof_certs').value = JSON.stringify(certs, null, 2);
+  renderCertsList();
+  closeCertForm();
+  setTermLog('&gt; CERTIFICATION STAGED. TRANSMIT PROFILE UPDATE TO PERSIST.');
+}
+
+function deleteCert(idx) {
+  const certs = [...(currentProfile.certifications || [])];
+  if (!certs[idx]) return;
+  if (!confirm(`Remove certification "${certs[idx].title}"?`)) return;
+  certs.splice(idx, 1);
+  currentProfile.certifications = certs;
+  document.getElementById('prof_certs').value = JSON.stringify(certs, null, 2);
+  renderCertsList();
+  setTermLog('&gt; CERTIFICATION REMOVED. TRANSMIT PROFILE UPDATE TO PERSIST.');
+}
+
+async function saveProfile(e) {
+  if (e) e.preventDefault();
+  const btn = document.querySelector('#profileForm button[type="submit"]');
+  const originalBtnText = btn ? btn.innerHTML : '[ TRANSMIT PROFILE UPDATE ]';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'TRANSMITTING PROFILE UPDATE...';
+  }
+
+  let roles = [];
+  let certs = [];
+  const rawRoles = (document.getElementById('prof_roles').value || '').trim();
+  const rawCerts = (document.getElementById('prof_certs').value || '').trim();
+
+  if (rawRoles) {
+    try {
+      roles = JSON.parse(rawRoles);
+      if (!Array.isArray(roles)) roles = [roles];
+    } catch (err) {
+      setTermLog('COMMAND ROLES FORMAT ERROR: Must be valid JSON array (e.g. [{"title":"ROLE","subtitle":"SUB"}])');
+      alert('Invalid JSON format in Command Roles:\n' + err.message);
+      if (btn) { btn.disabled = false; btn.innerHTML = originalBtnText; }
+      return;
+    }
+  }
+
+  if (rawCerts) {
+    try {
+      certs = JSON.parse(rawCerts);
+      if (!Array.isArray(certs)) certs = [certs];
+    } catch (err) {
+      setTermLog('CERTIFICATIONS FORMAT ERROR: Must be valid JSON array (e.g. [{"title":"CERT","subtitle":"SUB"}])');
+      alert('Invalid JSON format in Certifications:\n' + err.message);
+      if (btn) { btn.disabled = false; btn.innerHTML = originalBtnText; }
+      return;
+    }
+  }
+
+  const payload = {
+    name: document.getElementById('prof_name').value,
+    callsign: document.getElementById('prof_callsign').value,
+    secondary_handle: document.getElementById('prof_secondary').value,
+    location: document.getElementById('prof_location').value,
+    status: document.getElementById('prof_status').value,
+    tagline: document.getElementById('prof_tagline').value,
+    bio: document.getElementById('prof_bio').value,
+    photo_path: document.getElementById('prof_photo').value,
+    stat_wins: document.getElementById('prof_stat_wins').value,
+    stat_clubs: document.getElementById('prof_stat_clubs').value,
+    stat_drive: document.getElementById('prof_stat_drive').value,
+    contact_email: document.getElementById('prof_email').value,
+    contact_github: document.getElementById('prof_github').value,
+    contact_linkedin: document.getElementById('prof_linkedin').value,
+    contact_website: document.getElementById('prof_website').value,
+    command_roles: roles,
+    certifications: certs
+  };
+
+  setTermLog('TRANSMITTING PROFILE UPDATE TO DATABASE...');
+
+  try {
+    const res = await fetch('/api/profile', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: getAdminAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload)
+    });
+
+    const d = await res.json();
+    if (res.ok && (d.success || d.data)) {
+      currentProfile = d.data || payload;
+      renderRolesList();
+      renderCertsList();
+      setTermLog('PROFILE UPDATED // SYSTEM RECORD RE-INDEXED & PERSISTED');
+      if (btn) {
+        btn.innerHTML = '✓ PROFILE TRANSMITTED // PERSISTED';
+        btn.style.borderColor = 'var(--green)';
+        btn.style.color = 'var(--green)';
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.innerHTML = originalBtnText;
+          btn.style.borderColor = '';
+          btn.style.color = '';
+        }, 2000);
+      }
+    } else {
+      setTermLog('UPDATE ERROR: ' + (d.error || 'Failed to update profile'));
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalBtnText;
+      }
+    }
+  } catch (err) {
+    setTermLog('UPDATE FAILED: ' + err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnText;
+    }
+  }
+}
+
+/* ══════════════════════════════════════════════
+   EVIDENCE & PROOF LOGIC (MODAL CONTROLLER)
+══════════════════════════════════════════════ */
+function openEvidenceManager(targetType, targetId, targetTitle) {
+  activeEvidenceTarget = {
+    type: targetType,
+    id: targetId,
+    title: targetTitle || 'Target Record'
+  };
+
+  const modal = document.getElementById('evidenceManagerModal');
+  const titleEl = document.getElementById('evMgrTitle');
+  const subEl = document.getElementById('evMgrSubtitle');
+
+  titleEl.innerHTML = `PROOF &amp; EVIDENCE ARTIFACTS // ${escapeHTML(targetType.toUpperCase())}: ${escapeHTML(activeEvidenceTarget.title)}`;
+  subEl.innerHTML = `&gt; TARGET ID #${activeEvidenceTarget.id} &nbsp;|&nbsp; TYPE: ${escapeHTML(targetType.toUpperCase())} &nbsp;|&nbsp; ATTACH VERIFIED EXTERNAL PROOFS, PRESS, OR CERTIFICATES`;
+
+  resetEvidenceForm();
+  modal.style.display = 'flex';
+  loadEvidenceForActiveTarget();
+}
+
+function closeEvidenceManager() {
+  document.getElementById('evidenceManagerModal').style.display = 'none';
+  activeEvidenceTarget = null;
+  // Refresh parent lists to show updated evidence badges
+  loadProfile();
+  loadProjects();
+}
+
+async function loadEvidenceForActiveTarget() {
+  if (!activeEvidenceTarget) return;
+  const listEl = document.getElementById('evItemsList');
+  const countBadge = document.getElementById('evCountBadge');
+  listEl.innerHTML = '<div style="color:var(--text-dim);font-size:11px;">Fetching verified proof records...</div>';
+
+  try {
+    const res = await fetch(`/api/evidence?target_type=${encodeURIComponent(activeEvidenceTarget.type)}&target_id=${encodeURIComponent(activeEvidenceTarget.id)}`);
+    currentEvidenceItems = await res.json();
+    if (!Array.isArray(currentEvidenceItems)) currentEvidenceItems = [];
+
+    countBadge.textContent = `${currentEvidenceItems.length} ITEM${currentEvidenceItems.length === 1 ? '' : 'S'}`;
+    renderEvidenceList(currentEvidenceItems);
+  } catch (err) {
+    listEl.innerHTML = `<div style="color:var(--red);font-size:11px;">Error loading evidence: ${escapeHTML(err.message)}</div>`;
+  }
+}
+
+function renderEvidenceList(items) {
+  const listEl = document.getElementById('evItemsList');
+  if (!items.length) {
+    listEl.innerHTML = '<div style="color:var(--text-dim);font-size:11px;padding:8px 0;">No proof records attached to this record yet. Use the form above to add an artifact.</div>';
+    return;
+  }
+
+  listEl.innerHTML = items.map(ev => {
+    let typeBadgeClass = 'badge-g';
+    if (ev.artifact_type === 'link') typeBadgeClass = 'badge-c';
+    if (ev.artifact_type === 'article') typeBadgeClass = 'badge-g';
+    if (ev.artifact_type === 'document') typeBadgeClass = 'badge-c';
+    if (ev.artifact_type === 'image') typeBadgeClass = 'badge-g';
+
+    const hasLink = !!(ev.url || ev.file_path);
+    const href = ev.url || ev.file_path || '#';
+
+    return `
+      <div class="item-card" style="margin-bottom:10px;">
+        <div class="item-info">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <span class="item-badge ${typeBadgeClass}">${escapeHTML((ev.artifact_type || 'PROOF').toUpperCase())}</span>
+            ${ev.source_label ? `<span style="font-size:10px;color:var(--text-dim);">· ${escapeHTML(ev.source_label)}</span>` : ''}
+          </div>
+          <div class="item-title">${escapeHTML(ev.title)}</div>
+          ${ev.description ? `<div class="item-sub" style="margin-bottom:6px;">${escapeHTML(ev.description)}</div>` : ''}
+          ${hasLink ? `<div style="font-size:10px;"><a href="${href}" target="_blank" rel="noopener noreferrer" style="color:var(--cyan);text-decoration:underline;">&gt; VIEW ARTIFACT / ATTACHMENT ↗</a></div>` : ''}
+        </div>
+        <div class="item-ctrls">
+          <button type="button" onclick="editEvidenceItem(${ev.id})" class="hud-btn" style="font-size:10px;padding:4px 8px;">[ EDIT ]</button>
+          <button type="button" onclick="deleteEvidenceItem(${ev.id}, '${escapeHTML(ev.title)}')" class="hud-btn hud-btn-red" style="font-size:10px;padding:4px 8px;">[ DEL ]</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function resetEvidenceForm() {
+  document.getElementById('evidenceForm').reset();
+  document.getElementById('ev_id').value = '';
+  document.getElementById('ev_file_path').value = '';
+  document.getElementById('ev_file_preview').innerHTML = '';
+  document.getElementById('ev_order').value = ((currentEvidenceItems || []).length + 1);
+  document.getElementById('evFormTitle').textContent = '+ ATTACH EVIDENCE / PROOF ARTIFACT';
+  document.getElementById('evSubmitBtn').textContent = '[ ATTACH PROOF RECORD ]';
+  document.getElementById('evCancelBtn').style.display = 'none';
+}
+
+function editEvidenceItem(id) {
+  const item = currentEvidenceItems.find(i => i.id === id);
+  if (!item) return;
+
+  document.getElementById('ev_id').value = item.id;
+  document.getElementById('ev_title').value = item.title || '';
+  document.getElementById('ev_type').value = item.artifact_type || 'link';
+  document.getElementById('ev_source_label').value = item.source_label || '';
+  document.getElementById('ev_url').value = item.url || '';
+  document.getElementById('ev_file_path').value = item.file_path || '';
+  document.getElementById('ev_order').value = item.display_order || 1;
+  document.getElementById('ev_description').value = item.description || '';
+
+  if (item.file_path) {
+    document.getElementById('ev_file_preview').innerHTML = `Attached File: <a href="${item.file_path}" target="_blank" style="color:var(--cyan);">${item.file_path}</a>`;
+  } else {
+    document.getElementById('ev_file_preview').innerHTML = '';
+  }
+
+  document.getElementById('evFormTitle').textContent = 'EDIT PROOF ARTIFACT: ' + item.title;
+  document.getElementById('evSubmitBtn').textContent = '[ UPDATE PROOF RECORD ]';
+  document.getElementById('evCancelBtn').style.display = 'inline-block';
+  document.getElementById('evidenceForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function uploadEvidenceFile(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const formData = new FormData();
+  formData.append('file', file);
+
+  setTermLog('UPLOADING EVIDENCE FILE: ' + file.name + '...');
+  try {
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      credentials: 'include',
+      headers: getAdminAuthHeaders(),
+      body: formData
+    });
+    const data = await res.json();
+    if (res.ok && data.url) {
+      document.getElementById('ev_file_path').value = data.url;
+      document.getElementById('ev_file_preview').innerHTML = `✓ Uploaded: <a href="${data.url}" target="_blank" style="color:var(--cyan);">${data.url}</a>`;
+      setTermLog('EVIDENCE ARTIFACT STORED: ' + data.url);
+    } else {
+      setTermLog('UPLOAD FAILED: ' + (data.error || 'Server error'));
+    }
+  } catch (err) {
+    setTermLog('UPLOAD ERROR: ' + err.message);
+  }
+}
+
+async function saveEvidenceItem(e) {
+  e.preventDefault();
+  if (!activeEvidenceTarget) {
+    alert('No active target selected for evidence attachment.');
+    return;
+  }
+
+  const id = document.getElementById('ev_id').value;
+  const payload = {
+    target_type: activeEvidenceTarget.type,
+    target_id: parseInt(activeEvidenceTarget.id, 10) || activeEvidenceTarget.id,
+    title: document.getElementById('ev_title').value.trim(),
+    artifact_type: document.getElementById('ev_type').value,
+    source_label: document.getElementById('ev_source_label').value.trim(),
+    url: document.getElementById('ev_url').value.trim(),
+    file_path: document.getElementById('ev_file_path').value.trim(),
+    display_order: parseInt(document.getElementById('ev_order').value, 10) || 1,
+    description: document.getElementById('ev_description').value.trim()
+  };
+
+  const url = id ? `/api/evidence/${id}` : '/api/evidence';
+  const method = id ? 'PUT' : 'POST';
+
+  try {
+    const res = await fetch(url, {
+      method,
+      credentials: 'include',
+      headers: getAdminAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload)
+    });
+
+    const d = await res.json();
+    if (res.ok) {
+      setTermLog(id ? `&gt; PROOF RECORD UPDATED: ${payload.title}` : `&gt; PROOF RECORD ATTACHED: ${payload.title}`);
+      resetEvidenceForm();
+      loadEvidenceForActiveTarget();
+    } else {
+      setTermLog('EVIDENCE SAVE ERROR: ' + (d.error || 'Failed'));
+      alert('Save error: ' + (d.error || 'Failed'));
+    }
+  } catch (err) {
+    setTermLog('SAVE ERROR: ' + err.message);
+    alert('Save error: ' + err.message);
+  }
+}
+
+async function deleteEvidenceItem(id, title) {
+  if (!confirm(`Delete proof artifact: "${title}"?`)) return;
+  try {
+    const res = await fetch(`/api/evidence/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: getAdminAuthHeaders()
+    });
+    if (res.ok) {
+      setTermLog(`&gt; PROOF RECORD DECOMMISSIONED: ${title}`);
+      loadEvidenceForActiveTarget();
+    } else {
+      setTermLog('DELETE ERROR');
+    }
+  } catch (err) {
+    setTermLog('DELETE ERROR: ' + err.message);
+  }
+}
+
+/* ══════════════════════════════════════════════
+   PROJECTS LOGIC
+══════════════════════════════════════════════ */
+async function loadProjects() {
+  try {
+    const res = await fetch('/api/projects?all=1');
+    currentProjects = await res.json();
+    renderProjectsList();
+  } catch (err) {
+    setTermLog('ERROR FETCHING MISSIONS: ' + err.message);
+  }
+}
+
+function renderProjectsList() {
+  const container = document.getElementById('projectsList');
+  if (!currentProjects.length) {
+    container.innerHTML = '<div style="color:var(--text-dim);">No missions registered in database.</div>';
+    return;
+  }
+
+  container.innerHTML = currentProjects.map((p, idx) => {
+    const evCount = (p.evidence && p.evidence.length) || 0;
+    return `
+      <div class="item-card ${p.visibility ? '' : 'hidden-item'}">
+        <div class="item-info">
+          <span class="item-badge ${p.badge_type || 'badge-g'}">${escapeHTML(p.badge || 'MISSION')}</span>
+          ${p.visibility ? '' : '<span class="item-badge" style="border:1px solid var(--red);color:var(--red);">[ HIDDEN ]</span>'}
+          <div class="item-title">${escapeHTML(p.title)} <span style="font-size:10px;color:var(--text-dim);font-weight:normal;">[Order: ${p.display_order}]</span></div>
+          <div class="item-sub">${escapeHTML(p.description)}</div>
+        </div>
+        <div class="item-ctrls">
+          <button onclick="openEvidenceManager('project', ${p.id}, '${escapeHTML(p.title)}')" class="hud-btn hud-btn-gold">📁 EVIDENCE (${evCount})</button>
+          <button onclick="editProject(${p.id})" class="hud-btn">[ EDIT ]</button>
+          <button onclick="toggleProjectVisibility(${p.id}, ${p.visibility ? 0 : 1})" class="hud-btn hud-btn-cyan">${p.visibility ? 'HIDE' : 'SHOW'}</button>
+          <button onclick="deleteProject(${p.id}, '${escapeHTML(p.title)}')" class="hud-btn hud-btn-red">[ DEL ]</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openNewProjectForm() {
+  document.getElementById('projectForm').reset();
+  document.getElementById('proj_id').value = '';
+  document.getElementById('proj_image_preview').innerHTML = '';
+  const evBtn = document.getElementById('projEvidenceBtn');
+  if (evBtn) evBtn.style.display = 'none';
+  document.getElementById('projFormTitle').textContent = 'REGISTER NEW MISSION';
+  document.getElementById('projectFormPanel').style.display = 'block';
+  document.getElementById('projectFormPanel').scrollIntoView({ behavior: 'smooth' });
+}
+
+function closeProjectForm() {
+  document.getElementById('projectFormPanel').style.display = 'none';
+}
+
+function editProject(id) {
+  const p = currentProjects.find(item => item.id === id);
+  if (!p) return;
+  document.getElementById('proj_id').value = p.id;
+  document.getElementById('proj_title').value = p.title || '';
+  document.getElementById('proj_badge').value = p.badge || '';
+  document.getElementById('proj_badge_type').value = p.badge_type || 'badge-g';
+  document.getElementById('proj_desc').value = p.description || '';
+  document.getElementById('proj_url').value = p.project_url || '';
+  document.getElementById('proj_repo').value = p.repo_url || '';
+  document.getElementById('proj_order').value = p.display_order || 0;
+  document.getElementById('proj_visibility').value = p.visibility !== undefined ? p.visibility : 1;
+  document.getElementById('proj_image').value = p.image_path || '';
+  if (p.image_path) {
+    document.getElementById('proj_image_preview').innerHTML = `<img src="${p.image_path}" class="preview-thumb"/>`;
+  } else {
+    document.getElementById('proj_image_preview').innerHTML = '';
+  }
+
+  const evBtn = document.getElementById('projEvidenceBtn');
+  if (evBtn) {
+    evBtn.style.display = 'inline-block';
+    evBtn.onclick = () => openEvidenceManager('project', p.id, p.title);
+  }
+
+  document.getElementById('projFormTitle').textContent = 'EDIT MISSION: ' + p.title;
+  document.getElementById('projectFormPanel').style.display = 'block';
+  document.getElementById('projectFormPanel').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function saveProject(e) {
+  e.preventDefault();
+  const id = document.getElementById('proj_id').value;
+  const payload = {
+    title: document.getElementById('proj_title').value,
+    badge: document.getElementById('proj_badge').value,
+    badge_type: document.getElementById('proj_badge_type').value,
+    description: document.getElementById('proj_desc').value,
+    project_url: document.getElementById('proj_url').value,
+    repo_url: document.getElementById('proj_repo').value,
+    display_order: parseInt(document.getElementById('proj_order').value) || 0,
+    visibility: parseInt(document.getElementById('proj_visibility').value) || 0,
+    image_path: document.getElementById('proj_image').value
+  };
+
+  const url = id ? `/api/projects/${id}` : '/api/projects';
+  const method = id ? 'PUT' : 'POST';
+
+  try {
+    const res = await fetch(url, {
+      method,
+      credentials: 'include',
+      headers: getAdminAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload)
+    });
+    const d = await res.json();
+    if (res.ok) {
+      setTermLog(id ? `&gt; MISSION UPDATED: ${payload.title}` : `&gt; MISSION REGISTERED: ${payload.title}`);
+      closeProjectForm();
+      loadProjects();
+    } else {
+      setTermLog('MISSION SAVE ERROR: ' + (d.error || 'Failed'));
+    }
+  } catch (err) {
+    setTermLog('SAVE ERROR: ' + err.message);
+  }
+}
+
+async function toggleProjectVisibility(id, newVis) {
+  try {
+    const res = await fetch(`/api/projects/${id}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: getAdminAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ visibility: newVis })
+    });
+    if (res.ok) {
+      setTermLog(`&gt; MISSION VISIBILITY CHANGED: ID #${id}`);
+      loadProjects();
+    }
+  } catch (err) {
+    setTermLog('VISIBILITY ERROR: ' + err.message);
+  }
+}
+
+async function deleteProject(id, name) {
+  if (!confirm(`Are you sure you want to decommission mission: "${name}"?`)) return;
+  try {
+    const res = await fetch(`/api/projects/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: getAdminAuthHeaders()
+    });
+    if (res.ok) {
+      setTermLog(`&gt; MISSION DECOMMISSIONED: ${name}`);
+      loadProjects();
+    }
+  } catch (err) {
+    setTermLog('DELETE ERROR: ' + err.message);
+  }
+}
+
+/* ══════════════════════════════════════════════
+   SKILLS & LIVE RADAR LOGIC
+══════════════════════════════════════════════ */
+async function loadSkills() {
+  try {
+    const res = await fetch('/api/skills');
+    currentSkills = await res.json();
+    renderSkillsList();
+    updateLiveRadar();
+  } catch (err) {
+    setTermLog('ERROR FETCHING SKILLS: ' + err.message);
+  }
+}
+
+function renderSkillsList() {
+  const container = document.getElementById('skillsList');
+  if (!currentSkills.length) {
+    container.innerHTML = '<div style="color:var(--text-dim);">No capabilities registered.</div>';
+    return;
+  }
+
+  container.innerHTML = currentSkills.map(s => `
+    <div class="item-card">
+      <div class="item-info">
+        <span class="item-badge ${s.is_radar ? 'badge-g' : 'badge-c'}">${s.is_radar ? 'RADAR ACTIVE' : 'BREAKDOWN ONLY'}</span>
+        <div class="item-title">${escapeHTML(s.name)} &nbsp;·&nbsp; <span style="color:var(--gold);">${s.proficiency}%</span></div>
+        <div class="item-sub">Radar Label: "${escapeHTML(s.radar_label || s.name)}" | Category: ${escapeHTML(s.category)} | Order: ${s.display_order}</div>
+      </div>
+      <div class="item-ctrls">
+        <button onclick="editSkill(${s.id})" class="hud-btn">[ EDIT ]</button>
+        <button onclick="deleteSkill(${s.id}, '${escapeHTML(s.name)}')" class="hud-btn hud-btn-red">[ DEL ]</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openNewSkillForm() {
+  document.getElementById('skillForm').reset();
+  document.getElementById('skill_id').value = '';
+  document.getElementById('skill_prof_val').textContent = '80';
+  document.getElementById('skill_proficiency').value = 80;
+  document.getElementById('skillFormTitle').textContent = 'ADD CAPABILITY';
+  document.getElementById('skillFormPanel').style.display = 'block';
+  document.getElementById('skillFormPanel').scrollIntoView({ behavior: 'smooth' });
+}
+
+function closeSkillForm() {
+  document.getElementById('skillFormPanel').style.display = 'none';
+}
+
+function editSkill(id) {
+  const s = currentSkills.find(item => item.id === id);
+  if (!s) return;
+  document.getElementById('skill_id').value = s.id;
+  document.getElementById('skill_name').value = s.name || '';
+  document.getElementById('skill_radar_label').value = s.radar_label || '';
+  document.getElementById('skill_proficiency').value = s.proficiency || 50;
+  document.getElementById('skill_prof_val').textContent = s.proficiency || 50;
+  document.getElementById('skill_category').value = s.category || 'frontend';
+  document.getElementById('skill_is_radar').value = s.is_radar ? 1 : 0;
+  document.getElementById('skill_order').value = s.display_order || 0;
+
+  document.getElementById('skillFormTitle').textContent = 'EDIT CAPABILITY: ' + s.name;
+  document.getElementById('skillFormPanel').style.display = 'block';
+  document.getElementById('skillFormPanel').scrollIntoView({ behavior: 'smooth' });
+  updateLiveRadar();
+}
+
+async function saveSkill(e) {
+  e.preventDefault();
+  const id = document.getElementById('skill_id').value;
+  const payload = {
+    name: document.getElementById('skill_name').value,
+    radar_label: document.getElementById('skill_radar_label').value,
+    proficiency: parseInt(document.getElementById('skill_proficiency').value) || 50,
+    category: document.getElementById('skill_category').value,
+    is_radar: parseInt(document.getElementById('skill_is_radar').value) || 0,
+    display_order: parseInt(document.getElementById('skill_order').value) || 0
+  };
+
+  const url = id ? `/api/skills/${id}` : '/api/skills';
+  const method = id ? 'PUT' : 'POST';
+
+  try {
+    const res = await fetch(url, {
+      method,
+      credentials: 'include',
+      headers: getAdminAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload)
+    });
+    const d = await res.json();
+    if (res.ok) {
+      setTermLog(id ? `&gt; CAPABILITY UPDATED: ${payload.name}` : `&gt; CAPABILITY REGISTERED: ${payload.name}`);
+      closeSkillForm();
+      loadSkills();
+    }
+  } catch (err) {
+    setTermLog('SKILL SAVE ERROR: ' + err.message);
+  }
+}
+
+async function deleteSkill(id, name) {
+  if (!confirm(`Delete capability: "${name}"?`)) return;
+  try {
+    const res = await fetch(`/api/skills/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: getAdminAuthHeaders()
+    });
+    if (res.ok) {
+      setTermLog(`&gt; CAPABILITY PURGED: ${name}`);
+      loadSkills();
+    }
+  } catch (err) {
+    setTermLog('DELETE ERROR: ' + err.message);
+  }
+}
+
+/* ══ LIVE RADAR PREVIEW RENDERER ══ */
+function updateLiveRadar() {
+  const c = document.getElementById('liveRadarCanvas');
+  if (!c) return;
+  const rc = c.getContext('2d');
+  const cx = 140, cy = 140, radius = 100;
+
+  // Gather radar skills from list or form inputs
+  let radarItems = currentSkills.filter(s => s.is_radar);
+  if (radarItems.length === 0) radarItems = currentSkills.slice(0, 8);
+
+  const radarSkills = radarItems.map(s => ({
+    label: s.radar_label || s.name,
+    val: (s.proficiency || 50) / 100
+  }));
+
+  const n = radarSkills.length;
+  if (n === 0) return;
+  const angleStep = (Math.PI * 2) / n;
+
+  function getPoint(i, r) {
+    const angle = i * angleStep - Math.PI / 2;
+    return { x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r };
+  }
+
+  rc.clearRect(0, 0, 280, 280);
+
+  // Grid rings
+  [0.25, 0.5, 0.75, 1].forEach(ring => {
+    rc.beginPath();
+    for (let i = 0; i < n; i++) {
+      const pt = getPoint(i, radius * ring);
+      i === 0 ? rc.moveTo(pt.x, pt.y) : rc.lineTo(pt.x, pt.y);
+    }
+    rc.closePath();
+    rc.strokeStyle = 'rgba(240,165,0,0.15)';
+    rc.lineWidth = 1;
+    rc.stroke();
+  });
+
+  // Spokes
+  for (let i = 0; i < n; i++) {
+    const pt = getPoint(i, radius);
+    rc.beginPath();
+    rc.moveTo(cx, cy);
+    rc.lineTo(pt.x, pt.y);
+    rc.strokeStyle = 'rgba(240,165,0,0.2)';
+    rc.lineWidth = 1;
+    rc.stroke();
+  }
+
+  // Filled area
+  rc.beginPath();
+  radarSkills.forEach((s, i) => {
+    const pt = getPoint(i, radius * s.val);
+    i === 0 ? rc.moveTo(pt.x, pt.y) : rc.lineTo(pt.x, pt.y);
+  });
+  rc.closePath();
+  rc.fillStyle = 'rgba(240,165,0,0.18)';
+  rc.fill();
+  rc.strokeStyle = 'rgba(240,165,0,0.9)';
+  rc.lineWidth = 1.5;
+  rc.stroke();
+
+  // Dots
+  radarSkills.forEach((s, i) => {
+    const pt = getPoint(i, radius * s.val);
+    rc.beginPath();
+    rc.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
+    rc.fillStyle = '#ffd060';
+    rc.fill();
+  });
+
+  // Labels
+  radarSkills.forEach((s, i) => {
+    const pt = getPoint(i, radius + 18);
+    rc.font = '9px Share Tech Mono';
+    rc.fillStyle = 'rgba(138,180,212,0.95)';
+    rc.textAlign = 'center';
+    rc.textBaseline = 'middle';
+    rc.fillText(s.label, pt.x, pt.y);
+  });
+
+  // Center
+  rc.beginPath();
+  rc.arc(cx, cy, 4, 0, Math.PI * 2);
+  rc.fillStyle = '#f0a500';
+  rc.fill();
+}
+
+/* ══════════════════════════════════════════════
+   SECURITY CIPHER & CREDENTIALS REKEY
+══════════════════════════════════════════════ */
+async function handleCredentialsUpdate(e) {
+  e.preventDefault();
+  const uname = (document.getElementById('admin_username').value || '').trim();
+  const currPass = document.getElementById('curr_pass').value;
+  const p1 = document.getElementById('new_pass').value;
+  const p2 = document.getElementById('confirm_pass').value;
+
+  if (!currPass) {
+    alert('Error: Current access cipher is required for authorization.');
+    return;
+  }
+
+  if (p1 || p2) {
+    if (p1 !== p2) {
+      alert('Error: New access ciphers do not match.');
+      return;
+    }
+    if (p1.length < 6) {
+      alert('Error: New access cipher must be at least 6 characters.');
+      return;
+    }
+  }
+
+  if (uname.length < 3) {
+    alert('Error: Operator callsign/username must be at least 3 characters.');
+    return;
+  }
+
+  setTermLog('&gt; UPDATING CREDENTIALS IN SECURE DATABASE...');
+  try {
+    const res = await fetch('/api/admin/credentials', {
+      method: 'POST',
+      credentials: 'include',
+      headers: getAdminAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({
+        current_password: currPass,
+        new_username: uname,
+        new_password: p1 || undefined
+      })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      alert('Operator credentials successfully rekeyed in secure database. Other sessions invalidated.');
+      setTermLog('&gt; OPERATOR CREDENTIALS REKEYED SUCCESSFULLY');
+      document.getElementById('curr_pass').value = '';
+      document.getElementById('new_pass').value = '';
+      document.getElementById('confirm_pass').value = '';
+      if (data.user && data.user.username) {
+        document.getElementById('admin_username').value = data.user.username;
+      }
+    } else {
+      alert('Credential update error: ' + (data.error || 'Failed to update credentials.'));
+      setTermLog('CREDENTIAL UPDATE ERROR: ' + (data.error || 'Failed'));
+    }
+  } catch (err) {
+    alert('Communication error: ' + err.message);
+    setTermLog('CREDENTIAL UPDATE FAILED: ' + err.message);
+  }
+}
+
+/* ══════════════════════════════════════════════
+   GATEWAY CMS MANAGEMENT & WORKFLOW
+══════════════════════════════════════════════ */
+let gatewayConfigData = null;
+let modalTestTiles = [];
+let modalTestConfig = null;
+
+async function loadGatewayConfig() {
+  try {
+    const res = await fetch('/api/admin/gateway/config', {
+      credentials: 'include',
+      headers: getAdminAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to fetch gateway configuration.');
+    const cfg = await res.json();
+    gatewayConfigData = cfg;
+
+    document.getElementById('gw_grid_size').value = cfg.grid_size || 3;
+    document.getElementById('gw_symbols').value = JSON.stringify(cfg.symbols || [], null, 2);
+    document.getElementById('gw_solution').value = JSON.stringify(cfg.solution || [], null, 2);
+    document.getElementById('gw_initial_scramble').value = JSON.stringify(cfg.initial_scramble || [], null, 2);
+    document.getElementById('gw_new_passcode').value = '';
+    document.getElementById('gw_update_note').value = '';
+
+    loadGatewayHistory();
+    loadGatewayAuditLogs();
+  } catch (err) {
+    setTermLog('GATEWAY LOAD ERROR: ' + err.message);
+  }
+}
+
+async function handleGatewayPublish(e) {
+  e.preventDefault();
+  let symbols = [], solution = [], scramble = [];
+  try {
+    symbols = JSON.parse(document.getElementById('gw_symbols').value || '[]');
+    solution = JSON.parse(document.getElementById('gw_solution').value || '[]');
+    scramble = JSON.parse(document.getElementById('gw_initial_scramble').value || '[]');
+  } catch (err) {
+    alert('JSON Syntax Error in Symbols, Solution, or Scramble array:\n' + err.message);
+    return;
+  }
+
+  const newPasscode = document.getElementById('gw_new_passcode').value.trim();
+  const note = document.getElementById('gw_update_note').value.trim() || 'Configuration updated via Admin CMS';
+
+  const isConfirmed = confirm(
+    'CONFIRM GATEWAY RECONFIGURATION\n\n' +
+    'Are you sure you want to publish these changes live?\n' +
+    'A rollback snapshot will be created automatically in your history archive.'
+  );
+  if (!isConfirmed) return;
+
+  setTermLog('&gt; PUBLISHING GATEWAY MATRIX CHANGES...');
+
+  try {
+    const payload = {
+      grid_size: Number(document.getElementById('gw_grid_size').value),
+      symbols,
+      solution,
+      initial_scramble: scramble,
+      passcode: newPasscode || undefined,
+      note
+    };
+
+    const res = await fetch('/api/admin/gateway/config', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: getAdminAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      setTermLog('&gt; GATEWAY CONFIGURATION PUBLISHED & SNAPSHOT ARCHIVED');
+      alert('Gateway changes successfully published live.');
+      loadGatewayConfig();
+    } else {
+      setTermLog('PUBLISH FAILED: ' + (data.error || 'Server error'));
+      alert('Publish error: ' + (data.error || 'Server error'));
+    }
+  } catch (err) {
+    setTermLog('PUBLISH ERROR: ' + err.message);
+  }
+}
+
+async function handleGatewayResetDefault() {
+  const isConfirmed = confirm(
+    'FACTORY BASELINE RESET\n\n' +
+    'Are you sure you want to reset the Security Gateway to factory baseline defaults?\n' +
+    'Your current settings will be archived in the rollback history.'
+  );
+  if (!isConfirmed) return;
+
+  setTermLog('&gt; RESETTING GATEWAY TO FACTORY BASELINE...');
+  try {
+    const res = await fetch('/api/admin/gateway/reset', {
+      method: 'POST',
+      credentials: 'include',
+      headers: getAdminAuthHeaders()
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setTermLog('&gt; GATEWAY RESET TO FACTORY BASELINE');
+      alert('Gateway successfully reset to factory defaults.');
+      loadGatewayConfig();
+    } else {
+      setTermLog('RESET ERROR: ' + (data.error || 'Server error'));
+    }
+  } catch (err) {
+    setTermLog('RESET FAILED: ' + err.message);
+  }
+}
+
+async function loadGatewayHistory() {
+  const container = document.getElementById('gwHistoryList');
+  if (!container) return;
+  try {
+    const res = await fetch('/api/admin/gateway/history', {
+      credentials: 'include',
+      headers: getAdminAuthHeaders()
+    });
+    const items = await res.json();
+    if (!items || items.length === 0) {
+      container.innerHTML = '<div style="color:var(--text-dim);font-size:11px;">No rollback snapshots archived yet.</div>';
+      return;
+    }
+
+    container.innerHTML = items.map(h => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(2,12,27,0.6);border:1px solid var(--gold-dim);margin-bottom:6px;border-radius:2px;">
+        <div>
+          <div style="font-family:var(--orb);font-size:11px;color:var(--gold-bright);">
+            #${h.id} — ${escapeHTML(h.note || 'Snapshot')}
+          </div>
+          <div style="font-size:10px;color:var(--text-dim);margin-top:2px;">
+            Archived: ${h.created_at} | Grid: ${h.grid_size}x${h.grid_size} | Runes: ${h.symbols_count}
+          </div>
+        </div>
+        <button type="button" onclick="handleGatewayRollback(${h.id})" class="hud-btn hud-btn-gold" style="font-size:10px;padding:3px 8px;">
+          ⟲ ROLLBACK
+        </button>
+      </div>
+    `).join('');
+  } catch (err) {
+    container.innerHTML = `<div style="color:var(--red);">Failed to load history: ${err.message}</div>`;
+  }
+}
+
+async function handleGatewayRollback(historyId) {
+  const isConfirmed = confirm(`Are you sure you want to restore configuration snapshot #${historyId}?`);
+  if (!isConfirmed) return;
+
+  setTermLog(`&gt; ROLLING BACK TO SNAPSHOT #${historyId}...`);
+  try {
+    const res = await fetch('/api/admin/gateway/rollback', {
+      method: 'POST',
+      credentials: 'include',
+      headers: getAdminAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ id: historyId })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setTermLog(`&gt; ROLLED BACK TO SNAPSHOT #${historyId}`);
+      alert(`Configuration successfully restored to snapshot #${historyId}.`);
+      loadGatewayConfig();
+    } else {
+      setTermLog('ROLLBACK FAILED: ' + (data.error || 'Server error'));
+    }
+  } catch (err) {
+    setTermLog('ROLLBACK ERROR: ' + err.message);
+  }
+}
+
+async function loadGatewayAuditLogs() {
+  const container = document.getElementById('gwAuditLogsList');
+  if (!container) return;
+  try {
+    const res = await fetch('/api/admin/gateway/audit', {
+      credentials: 'include',
+      headers: getAdminAuthHeaders()
+    });
+    const logs = await res.json();
+    if (!logs || logs.length === 0) {
+      container.innerHTML = '<div style="color:var(--text-dim);font-size:11px;">No audit events recorded yet.</div>';
+      return;
+    }
+
+    container.innerHTML = `
+      <div style="max-height:280px;overflow-y:auto;border:1px solid var(--gold-dim);border-radius:2px;">
+        <table style="width:100%;border-collapse:collapse;font-size:11px;">
+          <thead>
+            <tr style="background:rgba(240,165,0,0.1);color:var(--gold-bright);text-align:left;border-bottom:1px solid var(--gold-dim);">
+              <th style="padding:6px 10px;">TIMESTAMP</th>
+              <th style="padding:6px 10px;">CLIENT IP</th>
+              <th style="padding:6px 10px;">TYPE</th>
+              <th style="padding:6px 10px;">OUTCOME</th>
+              <th style="padding:6px 10px;">DETAILS</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${logs.map(l => {
+              let badgeColor = 'var(--cyan)';
+              let bg = 'rgba(79,195,247,0.1)';
+              if (l.outcome === 'success') { badgeColor = 'var(--green)'; bg = 'rgba(34,197,94,0.1)'; }
+              if (l.outcome === 'failure') { badgeColor = 'var(--red)'; bg = 'rgba(239,68,68,0.1)'; }
+              if (l.outcome === 'lockout') { badgeColor = '#fbbf24'; bg = 'rgba(251,191,36,0.1)'; }
+
+              return `
+                <tr style="border-bottom:1px solid rgba(240,165,0,0.08);">
+                  <td style="padding:6px 10px;color:var(--text-dim);">${escapeHTML(l.timestamp)}</td>
+                  <td style="padding:6px 10px;color:var(--text);">${escapeHTML(l.ip)}</td>
+                  <td style="padding:6px 10px;font-family:var(--orb);font-size:9px;color:var(--gold-bright);">${escapeHTML(l.attempt_type.toUpperCase())}</td>
+                  <td style="padding:6px 10px;">
+                    <span style="display:inline-block;padding:2px 6px;border-radius:2px;font-size:9px;color:${badgeColor};background:${bg};border:1px solid ${badgeColor};">
+                      ${escapeHTML(l.outcome.toUpperCase())}
+                    </span>
+                  </td>
+                  <td style="padding:6px 10px;color:var(--text-dim);">${escapeHTML(l.details || '—')}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  } catch (err) {
+    container.innerHTML = `<div style="color:var(--red);">Failed to load audit logs: ${err.message}</div>`;
+  }
+}
+
+/* ══ VISITOR PREVIEW MODAL LOGIC ══ */
+function openGatewayPreviewModal() {
+  try {
+    const size = Number(document.getElementById('gw_grid_size').value) || 3;
+    const symbols = JSON.parse(document.getElementById('gw_symbols').value || '[]');
+    const solution = JSON.parse(document.getElementById('gw_solution').value || '[]');
+    const scramble = JSON.parse(document.getElementById('gw_initial_scramble').value || '[]');
+
+    modalTestConfig = { size, symbols, solution, scramble };
+    modalTestTiles = [...scramble];
+
+    document.getElementById('gwPreviewModal').style.display = 'flex';
+    renderModalPreview();
+    hideModalPreviewStatus();
+  } catch (err) {
+    alert('Cannot open test sandbox. Check JSON format:\n' + err.message);
+  }
+}
+
+function closeGatewayPreviewModal() {
+  document.getElementById('gwPreviewModal').style.display = 'none';
+}
+
+function renderModalPreview() {
+  const board = document.getElementById('modalPreviewBoard');
+  board.innerHTML = '';
+  const sz = modalTestConfig.size;
+  board.style.gridTemplateColumns = `repeat(${sz}, 65px)`;
+  board.style.gridTemplateRows = `repeat(${sz}, 65px)`;
+
+  modalTestTiles.forEach((val, idx) => {
+    const tile = document.createElement('div');
+    if (val === null || val === undefined || val === '') {
+      tile.style.cssText = 'width:65px;height:65px;background:rgba(2,12,27,0.7);border:1px dashed rgba(79,195,247,0.2);border-radius:4px;';
+    } else {
+      tile.style.cssText = 'width:65px;height:65px;background:linear-gradient(135deg,#2b3644,#17202b);border:1px solid #4a5c73;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--gold-bright);cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.4);user-select:none;';
+      tile.textContent = modalTestConfig.symbols[val] || (val + 1);
+      tile.onclick = () => handleModalTileClick(idx);
+    }
+    board.appendChild(tile);
+  });
+}
+
+function handleModalTileClick(clickedIdx) {
+  const emptyIdx = modalTestTiles.findIndex(t => t === null || t === undefined || t === '');
+  if (emptyIdx === -1) return;
+  const sz = modalTestConfig.size;
+  const r1 = Math.floor(clickedIdx / sz), c1 = clickedIdx % sz;
+  const r2 = Math.floor(emptyIdx / sz), c2 = emptyIdx % sz;
+
+  if (Math.abs(r1 - r2) + Math.abs(c1 - c2) === 1) {
+    modalTestTiles[emptyIdx] = modalTestTiles[clickedIdx];
+    modalTestTiles[clickedIdx] = null;
+    renderModalPreview();
+  }
+}
+
+function resetModalPreviewTiles() {
+  modalTestTiles = [...modalTestConfig.scramble];
+  renderModalPreview();
+  showModalPreviewStatus('Test tiles reset to draft scramble sequence.', 'info');
+}
+
+function testModalPreviewPuzzle() {
+  const sol = modalTestConfig.solution;
+  if (modalTestTiles.length !== sol.length) {
+    showModalPreviewStatus('MISMATCH: Tile count does not match solution length.', 'error');
+    return;
+  }
+
+  let match = true;
+  for (let i = 0; i < sol.length; i++) {
+    const exp = sol[i];
+    const act = modalTestTiles[i];
+    if (exp === null || exp === undefined || exp === '') {
+      if (act !== null && act !== undefined && act !== '') match = false;
+    } else {
+      if (String(act) !== String(exp)) match = false;
+    }
+  }
+
+  if (match) {
+    showModalPreviewStatus('✓ TEST VERIFICATION PASSED: Rune sequence matches target solution!', 'success');
+  } else {
+    showModalPreviewStatus('✗ TEST CIPHER MISMATCH: Sequence does not match target solution.', 'error');
+  }
+}
+
+function showModalPreviewStatus(msg, type) {
+  const st = document.getElementById('modalPreviewStatus');
+  st.textContent = msg;
+  st.style.display = 'block';
+  if (type === 'success') {
+    st.style.background = 'rgba(34,197,94,0.15)';
+    st.style.color = '#86efac';
+    st.style.border = '1px solid var(--green)';
+  } else if (type === 'error') {
+    st.style.background = 'rgba(239,68,68,0.15)';
+    st.style.color = '#fca5a5';
+    st.style.border = '1px solid var(--red)';
+  } else {
+    st.style.background = 'rgba(79,195,247,0.15)';
+    st.style.color = 'var(--cyan)';
+    st.style.border = '1px solid var(--cyan-dim)';
+  }
+}
+
+function hideModalPreviewStatus() {
+  document.getElementById('modalPreviewStatus').style.display = 'none';
+}
+
+function updateGatewayPreviewState() {
+  // Triggered when grid size changes
+}
+
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+/* ══════════════════════════════════════════════
+   SEO & SITE IDENTITY SETTINGS LOGIC
+══════════════════════════════════════════════ */
+let currentSeoSettings = {};
+
+async function loadSeoSettings() {
+  try {
+    const res = await fetch('/api/settings');
+    if (!res.ok) throw new Error('Failed to load SEO settings');
+    currentSeoSettings = await res.json();
+    populateSeoForm(currentSeoSettings);
+  } catch (err) {
+    console.warn('[SEO] Could not load settings from server:', err);
+  }
+}
+
+function populateSeoForm(s) {
+  if (!s) return;
+  document.getElementById('seo_title').value = s.site_title || '';
+  document.getElementById('seo_desc').value = s.meta_description || '';
+  document.getElementById('seo_canonical').value = s.canonical_url || '';
+  document.getElementById('seo_robots').value = s.robots_policy || 'index, follow';
+  document.getElementById('seo_favicon').value = s.favicon_path || '';
+  document.getElementById('seo_social_img').value = s.social_image_path || '';
+
+  updateSeoPreviews();
+}
+
+function updateSeoPreviews() {
+  const title = document.getElementById('seo_title').value || 'Jeycyn.Jeff || DEV-001';
+  const desc = document.getElementById('seo_desc').value || 'Innovative software developer, robotics engineer, and AI systems builder based in Eldoret, Kenya.';
+  const canonical = document.getElementById('seo_canonical').value || window.location.origin;
+  const favPath = document.getElementById('seo_favicon').value || '/favicon.ico';
+  const socPath = document.getElementById('seo_social_img').value || '';
+
+  // Character counters
+  const titleCount = document.getElementById('seo_title_count');
+  if (titleCount) titleCount.textContent = title.length;
+
+  const descCount = document.getElementById('seo_desc_count');
+  if (descCount) descCount.textContent = desc.length;
+
+  // Favicon preview thumbnail
+  const favImg = document.getElementById('seo_fav_img_preview');
+  if (favImg) {
+    favImg.src = favPath;
+  }
+
+  // Google SERP preview
+  const serpTitle = document.getElementById('serpTitle');
+  if (serpTitle) serpTitle.textContent = title;
+
+  const serpDesc = document.getElementById('serpDesc');
+  if (serpDesc) serpDesc.textContent = desc;
+
+  const serpUrl = document.getElementById('serpUrl');
+  if (serpUrl) serpUrl.textContent = canonical;
+
+  const serpFav = document.getElementById('serpFavicon');
+  if (serpFav) serpFav.src = favPath;
+
+  // Derive site name
+  let siteName = 'Jeycyn.Jeff';
+  try {
+    const parsed = new URL(canonical);
+    siteName = parsed.hostname;
+  } catch (e) {
+    siteName = 'jeycyn.dev';
+  }
+  const serpSiteName = document.getElementById('serpSiteName');
+  if (serpSiteName) serpSiteName.textContent = siteName;
+
+  // Social Preview Card
+  const socTitle = document.getElementById('socCardTitle');
+  if (socTitle) socTitle.textContent = title;
+
+  const socDesc = document.getElementById('socCardDesc');
+  if (socDesc) socDesc.textContent = desc;
+
+  const socDomain = document.getElementById('socCardDomain');
+  if (socDomain) socDomain.textContent = siteName.toUpperCase();
+
+  const socImg = document.getElementById('socCardImg');
+  const socPlaceholder = document.getElementById('socCardPlaceholder');
+  if (socPath && socPath.trim()) {
+    if (socImg) {
+      socImg.src = socPath;
+      socImg.style.display = 'block';
+    }
+    if (socPlaceholder) socPlaceholder.style.display = 'none';
+  } else {
+    if (socImg) {
+      socImg.src = '';
+      socImg.style.display = 'none';
+    }
+    if (socPlaceholder) socPlaceholder.style.display = 'flex';
+  }
+}
+
+async function uploadSeoAsset(input, targetInputId) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const formData = new FormData();
+  formData.append('file', file);
+
+  setTermLog('UPLOADING & STORING SEO ASSET: ' + file.name + '...');
+
+  try {
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      credentials: 'include',
+      headers: getAdminAuthHeaders(),
+      body: formData
+    });
+    const data = await res.json();
+    if (res.ok && data.url) {
+      document.getElementById(targetInputId).value = data.url;
+      updateSeoPreviews();
+      setTermLog('SEO ASSET PERSISTED: ' + data.url);
+    } else {
+      setTermLog('SEO UPLOAD FAILED: ' + (data.error || 'Server error'));
+    }
+  } catch (err) {
+    setTermLog('SEO UPLOAD ERROR: ' + err.message);
+  }
+}
+
+async function saveSeoSettings(e) {
+  if (e) e.preventDefault();
+  const btn = document.getElementById('seoSaveBtn');
+  const originalText = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = 'TRANSMITTING SEO CONFIG...';
+  }
+
+  const payload = {
+    site_title: document.getElementById('seo_title').value.trim(),
+    meta_description: document.getElementById('seo_desc').value.trim(),
+    canonical_url: document.getElementById('seo_canonical').value.trim(),
+    robots_policy: document.getElementById('seo_robots').value,
+    favicon_path: document.getElementById('seo_favicon').value.trim(),
+    social_image_path: document.getElementById('seo_social_img').value.trim()
+  };
+
+  setTermLog('TRANSMITTING SEO & SITE IDENTITY CONFIG TO DATABASE...');
+
+  try {
+    const res = await fetch('/api/settings', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: getAdminAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (res.ok && (data.success || data.data)) {
+      currentSeoSettings = data.data || payload;
+      setTermLog('SEO SETTINGS PERSISTED // GLOBAL SITE IDENTITY RE-INDEXED');
+      if (btn) {
+        btn.innerHTML = '✓ SEO SETTINGS SAVED &amp; PROPAGATED';
+        btn.style.borderColor = 'var(--green)';
+        btn.style.color = 'var(--green)';
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+          btn.style.borderColor = '';
+          btn.style.color = '';
+        }, 2500);
+      }
+    } else {
+      setTermLog('SEO SAVE ERROR: ' + (data.error || 'Failed to update SEO settings'));
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+  } catch (err) {
+    setTermLog('SEO UPDATE FAILED: ' + err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
+  }
+}
+
+// Initial Boot with Session Verification
+async function initAdminAuthAndBoot() {
+  // Capture token from query param if passed during initial navigation
+  const params = new URLSearchParams(window.location.search);
+  const qToken = params.get('admin_token') || params.get('token');
+  if (qToken) {
+    sessionStorage.setItem('admin_token', qToken);
+    localStorage.setItem('admin_token', qToken);
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  const token = sessionStorage.getItem('admin_token') || localStorage.getItem('admin_token');
+  if (token) {
+    sessionStorage.setItem('admin_token', token);
+  }
+
+  try {
+    const res = await fetch('/api/auth/verify', {
+      headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+    });
+    const data = await res.json();
+    if (!data || !data.authenticated) {
+      sessionStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_token');
+      window.location.href = '/gateway';
+      return;
+    }
+    if (data.user && data.user.username) {
+      const uField = document.getElementById('admin_username');
+      if (uField) uField.value = data.user.username;
+    }
+    if (data.security_warnings) {
+      const banner = document.getElementById('securityAlertBanner');
+      const bannerText = document.getElementById('securityAlertText');
+      if (data.security_warnings.default_password && data.security_warnings.default_gateway_passcode) {
+        if (banner) banner.style.display = 'flex';
+        if (bannerText) bannerText.innerText = 'Default operator password AND default gateway passcode are currently active. Rekey credentials immediately in Tab 05 and Tab 06.';
+      } else if (data.security_warnings.default_password) {
+        if (banner) banner.style.display = 'flex';
+        if (bannerText) bannerText.innerText = 'Default operator password is active. Change the administrator password in Tab 05 (Security Cipher).';
+      } else if (data.security_warnings.default_gateway_passcode) {
+        if (banner) banner.style.display = 'flex';
+        if (bannerText) bannerText.innerText = 'Default visitor gateway passcode is active. Update your security passcode in Tab 06 (Gateway Matrix).';
+      }
+    }
+  } catch (err) {
+    // If verify request encounters network interruption, proceed with load attempts
+  }
+
+  loadProfile();
+  loadProjects();
+  loadSkills();
+  loadSeoSettings();
+  loadGatewayConfig();
+}
+
+initAdminAuthAndBoot();
+</script>
+</body>
+</html>

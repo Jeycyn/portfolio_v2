@@ -1,0 +1,11 @@
+node_modules/
+data/
+uploads/
+*.db
+*.sqlite
+.env
+.env.local
+.env.*.local
+.vercel
+.DS_Store
+npm-debug.log*

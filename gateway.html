@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SECURITY GATEWAY || CIPHER MATRIX & OPERATOR TERMINAL</title>
+<link rel="icon" href="/favicon.ico"/>
+<link rel="shortcut icon" href="/favicon.ico"/>
+<link rel="apple-touch-icon" href="/favicon.ico"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Cinzel:wght@700&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --gold:#f0a500;--gold-dim:#7a5200;--gold-bright:#ffd060;
+  --navy:#020c1b;--navy2:#071525;--navy3:#0a1e35;
+  --cyan:#4fc3f7;--cyan-dim:#1a5a7a;
+  --stone:#1e2630;--stone-light:#2c3847;--stone-border:#3e4f63;
+  --green:#22c55e;--red:#ef4444;
+  --text:#8ab4d4;--text-dim:#3a6080;
+  --mono:'Share Tech Mono',monospace;--orb:'Orbitron',sans-serif;--rune:'Cinzel',serif;
+}
+html,body{
+  background:var(--navy);
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:13px;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  overflow-x:hidden;
+  padding:20px 14px;
+}
+
+#scanlines{
+  position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);
+  pointer-events:none;z-index:999;
+}
+
+/* HUD CORNERS */
+.hc{position:fixed;width:36px;height:36px;z-index:200;border-color:var(--gold-dim);border-style:solid;pointer-events:none;}
+.hc.tl{top:12px;left:12px;border-width:2px 0 0 2px;}
+.hc.tr{top:12px;right:12px;border-width:2px 2px 0 0;}
+.hc.bl{bottom:12px;left:12px;border-width:0 0 2px 2px;}
+.hc.br{bottom:12px;right:12px;border-width:0 2px 2px 0;}
+
+.gateway-wrapper{
+  width:100%;
+  max-width:1040px;
+  z-index:10;
+  animation:gwFadeIn 0.6s ease-out;
+}
+
+@keyframes gwFadeIn {
+  from { opacity:0; transform:translateY(12px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+.terminal-card{
+  border:1px solid var(--gold-dim);
+  border-radius:6px;
+  background:rgba(7,21,37,0.96);
+  box-shadow:0 0 40px rgba(0,0,0,0.85), 0 0 20px rgba(240,165,0,0.1);
+  overflow:hidden;
+  position:relative;
+}
+
+.terminal-card::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),var(--cyan),transparent);
+}
+
+.card-head{
+  background:rgba(240,165,0,0.08);
+  border-bottom:1px solid var(--gold-dim);
+  padding:14px 20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.card-title{
+  font-family:var(--orb);
+  font-size:12px;
+  color:var(--gold);
+  letter-spacing:3px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.card-title::before{
+  content:'';
+  width:8px;height:8px;
+  border-radius:50%;
+  background:var(--gold);
+  box-shadow:0 0 10px var(--gold);
+  animation:pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%,100%{ opacity:0.6; transform:scale(0.9); }
+  50%{ opacity:1; transform:scale(1.2); }
+}
+
+.gateway-steps-indicator{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.step-chip{
+  font-size:9px;
+  letter-spacing:1px;
+  font-family:var(--orb);
+  padding:3px 8px;
+  border-radius:3px;
+  border:1px solid var(--text-dim);
+  color:var(--text-dim);
+  background:rgba(2,12,27,0.6);
+  transition:all 0.3s;
+}
+
+.step-chip.active{
+  border-color:var(--gold);
+  color:var(--gold-bright);
+  background:rgba(240,165,0,0.15);
+  box-shadow:0 0 10px rgba(240,165,0,0.25);
+}
+
+.step-chip.completed{
+  border-color:var(--green);
+  color:var(--green);
+  background:rgba(34,197,94,0.12);
+}
+
+/* 2-PANEL GRID */
+.gateway-grid{
+  display:grid;
+  grid-template-columns:1.05fr 1fr;
+  min-height:480px;
+}
+
+@media(max-width:840px){
+  .gateway-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+.panel-col{
+  padding:24px;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+}
+
+.panel-col.left{
+  border-right:1px solid rgba(240,165,0,0.18);
+  background:rgba(2,12,27,0.4);
+}
+
+@media(max-width:840px){
+  .panel-col.left{
+    border-right:none;
+    border-bottom:1px solid rgba(240,165,0,0.18);
+  }
+}
+
+.panel-col.right{
+  background:rgba(7,21,37,0.92);
+}
+
+.panel-title{
+  font-family:var(--orb);
+  font-size:11px;
+  letter-spacing:2px;
+  color:var(--gold);
+  margin-bottom:6px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.panel-badge{
+  font-size:9px;
+  font-family:var(--mono);
+  letter-spacing:1px;
+  padding:2px 6px;
+  border-radius:2px;
+}
+.badge-locked{ color:var(--red); border:1px solid rgba(239,68,68,0.4); background:rgba(239,68,68,0.1); }
+.badge-ready{ color:var(--cyan); border:1px solid var(--cyan-dim); background:rgba(79,195,247,0.1); }
+.badge-unlocked{ color:var(--green); border:1px solid rgba(34,197,94,0.4); background:rgba(34,197,94,0.1); }
+
+.panel-desc{
+  font-size:11px;
+  color:var(--text-dim);
+  line-height:1.5;
+  margin-bottom:18px;
+}
+
+/* PUZZLE BOARD */
+.puzzle-section{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  margin:auto 0;
+  padding:10px 0;
+}
+
+.puzzle-board{
+  display:grid;
+  gap:8px;
+  background:radial-gradient(circle, #151d28 0%, #080f18 100%);
+  padding:12px;
+  border:2px solid var(--stone-border);
+  border-radius:6px;
+  box-shadow:inset 0 0 25px rgba(0,0,0,0.9), 0 0 15px rgba(240,165,0,0.08);
+  user-select:none;
+  transition:all 0.3s;
+}
+
+.puzzle-board.unlocked{
+  border-color:var(--green);
+  box-shadow:0 0 25px rgba(34,197,94,0.35), inset 0 0 20px rgba(34,197,94,0.15);
+}
+
+.puzzle-tile{
+  width:72px;
+  height:72px;
+  background:linear-gradient(135deg, #2b3644 0%, #17202b 100%);
+  border:1px solid #4a5c73;
+  border-radius:4px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition:transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s, border-color 0.2s;
+  position:relative;
+  box-shadow:0 4px 10px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.15);
+}
+
+.puzzle-tile:hover{
+  border-color:var(--gold);
+  box-shadow:0 0 14px rgba(240,165,0,0.4), inset 0 1px 2px rgba(255,255,255,0.25);
+  transform:translateY(-2px);
+}
+
+.puzzle-tile:active{
+  transform:translateY(0);
+}
+
+.puzzle-tile.empty{
+  background:rgba(2,12,27,0.7);
+  border:1px dashed rgba(79,195,247,0.3);
+  box-shadow:inset 0 0 15px rgba(0,0,0,0.8);
+  cursor:default;
+}
+
+.rune-symbol{
+  font-family:var(--rune);
+  font-size:26px;
+  color:var(--gold-bright);
+  text-shadow:0 0 10px rgba(240,165,0,0.6);
+  line-height:1;
+}
+
+.tile-number{
+  position:absolute;
+  top:3px;left:5px;
+  font-size:9px;
+  color:var(--cyan);
+  opacity:0.6;
+  font-family:var(--mono);
+}
+
+.puzzle-controls{
+  display:flex;
+  gap:10px;
+  width:100%;
+  max-width:280px;
+  margin-top:14px;
+}
+
+.btn-gw{
+  flex:1;
+  background:rgba(240,165,0,0.12);
+  border:1px solid var(--gold);
+  color:var(--gold-bright);
+  padding:10px 14px;
+  font-family:var(--orb);
+  font-size:10px;
+  letter-spacing:2px;
+  cursor:pointer;
+  border-radius:3px;
+  transition:all 0.25s;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+
+.btn-gw:hover:not(:disabled){
+  background:var(--gold);
+  color:var(--navy);
+  box-shadow:0 0 20px rgba(240,165,0,0.5);
+}
+
+.btn-gw:disabled{
+  opacity:0.35;
+  cursor:not-allowed;
+  border-color:var(--text-dim);
+  color:var(--text-dim);
+}
+
+.btn-reset-puzzle{
+  background:rgba(79,195,247,0.08);
+  border-color:var(--cyan-dim);
+  color:var(--cyan);
+  flex:0 0 auto;
+  padding:10px 12px;
+}
+
+.btn-reset-puzzle:hover:not(:disabled){
+  background:rgba(79,195,247,0.25);
+  border-color:var(--cyan);
+  color:#fff;
+}
+
+/* RIGHT PANEL PHASES */
+.phase-container{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  animation:phaseIn 0.4s ease-out;
+}
+
+@keyframes phaseIn {
+  from{ opacity:0; transform:translateY(8px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+
+.field-group{
+  margin-bottom:16px;
+}
+
+.input-label{
+  display:block;
+  font-size:10px;
+  color:var(--gold-bright);
+  letter-spacing:2px;
+  margin-bottom:6px;
+  font-family:var(--orb);
+}
+
+.input-field{
+  width:100%;
+  background:rgba(2,12,27,0.85);
+  border:1px solid var(--gold-dim);
+  border-radius:3px;
+  padding:11px 14px;
+  font-family:var(--mono);
+  font-size:13px;
+  color:#fff;
+  letter-spacing:1px;
+  outline:none;
+  transition:all 0.2s;
+}
+
+.input-field:focus{
+  border-color:var(--cyan);
+  box-shadow:0 0 14px rgba(79,195,247,0.3);
+  background:rgba(7,21,37,0.95);
+}
+
+.input-field:disabled{
+  opacity:0.4;
+  cursor:not-allowed;
+  border-color:var(--stone-border);
+}
+
+.status-callout{
+  padding:10px 12px;
+  border-radius:3px;
+  font-size:11px;
+  line-height:1.5;
+  margin-bottom:16px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.callout-awaiting{
+  background:rgba(79,195,247,0.08);
+  border:1px dashed var(--cyan-dim);
+  color:var(--cyan);
+}
+
+.callout-success{
+  background:rgba(34,197,94,0.1);
+  border:1px solid var(--green);
+  color:#86efac;
+}
+
+.callout-error{
+  background:rgba(239,68,68,0.12);
+  border:1px solid var(--red);
+  color:#fca5a5;
+}
+
+/* TERMINAL LOG FOOTER */
+.card-foot{
+  background:rgba(2,12,27,0.92);
+  border-top:1px solid rgba(240,165,0,0.15);
+  padding:12px 20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-size:11px;
+  color:var(--text-dim);
+  letter-spacing:1px;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+#termStatusLog{
+  color:var(--gold);
+  font-family:var(--mono);
+}
+
+.foot-link{
+  color:var(--text-dim);
+  text-decoration:none;
+  transition:color 0.2s;
+}
+.foot-link:hover{ color:var(--gold); }
+</style>
+</head>
+<body>
+
+<div id="scanlines"></div>
+
+<!-- HUD Corner brackets -->
+<div class="hc tl"></div>
+<div class="hc tr"></div>
+<div class="hc bl"></div>
+<div class="hc br"></div>
+
+<div class="gateway-wrapper">
+  <div class="terminal-card">
+    <div class="card-head">
+      <div class="card-title">TERMINAL GATEWAY // CIPHER BARRIER</div>
+      <div class="gateway-steps-indicator">
+        <span id="chipStep1" class="step-chip active">1. RUNE MATRIX</span>
+        <span id="chipStep2" class="step-chip">2. GATEWAY CIPHER</span>
+        <span id="chipStep3" class="step-chip">3. OPERATOR LOGIN</span>
+      </div>
+    </div>
+
+    <div class="gateway-grid">
+      <!-- ══════════════════════════════════════════════
+           LEFT PANEL: RUNE MATRIX PUZZLE
+      ══════════════════════════════════════════════ -->
+      <div class="panel-col left">
+        <div class="panel-title">
+          <span>STAGE 1: RUNE MATRIX</span>
+          <span id="puzzleBadge" class="panel-badge badge-ready">SLIDING PUZZLE</span>
+        </div>
+        <div class="panel-desc">
+          Slide the ancient rune tiles to align the matrix into consecutive numerical sequence. Adjacent tiles slide into the empty node.
+        </div>
+
+        <div class="puzzle-section">
+          <div id="puzzleBoard" class="puzzle-board"></div>
+          <div class="puzzle-controls">
+            <button id="btnResetPuzzle" class="btn-gw btn-reset-puzzle" title="Reset puzzle to initial scramble">⟲ RESET</button>
+            <button id="btnVerifyPuzzle" class="btn-gw">◆ VERIFY MATRIX</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════
+           RIGHT PANEL: PASSCODE & OPERATOR AUTHENTICATION
+      ══════════════════════════════════════════════ -->
+      <div class="panel-col right">
+        <!-- PHASE A: GATEWAY PASSCODE (ACTIVE ONCE PUZZLE VERIFIED) -->
+        <div id="phasePasscode" class="phase-container">
+          <div class="panel-title">
+            <span>STAGE 2: GATEWAY CLEARANCE</span>
+            <span id="passcodeBadge" class="panel-badge badge-locked">CIPHER LOCKED</span>
+          </div>
+          <div class="panel-desc">
+            Verify the clearance cipher key to unlock operator administrative authentication.
+          </div>
+
+          <div id="passcodeNotice" class="status-callout callout-awaiting">
+            <span>ℹ Solve the Rune Matrix on the left to activate cipher key entry.</span>
+          </div>
+
+          <form id="formPasscode" onsubmit="handlePasscodeSubmit(event)">
+            <div class="field-group">
+              <label class="input-label" for="passcodeInput">CLEARANCE CIPHER KEY</label>
+              <input type="password" id="passcodeInput" class="input-field" placeholder="ENTER GATEWAY CIPHER KEY" disabled autocomplete="off" required/>
+            </div>
+            <button type="submit" id="btnSubmitPasscode" class="btn-gw" style="width:100%;" disabled>
+              ◆ UNLOCK GATEWAY BARRIER
+            </button>
+          </form>
+        </div>
+
+        <!-- PHASE B: OPERATOR AUTHENTICATION (ACTIVE ONCE PASSCODE VERIFIED) -->
+        <div id="phaseLogin" class="phase-container" style="display:none;">
+          <div class="panel-title">
+            <span>STAGE 3: OPERATOR AUTHENTICATION</span>
+            <span class="panel-badge badge-unlocked">GATEWAY CLEARED</span>
+          </div>
+          <div class="panel-desc">
+            Enter administrative credentials to initialize encrypted CMS terminal session.
+          </div>
+
+          <form id="formLogin" onsubmit="handleLoginSubmit(event)">
+            <div class="field-group">
+              <label class="input-label" for="adminUsername">OPERATOR CALLSIGN / USERNAME</label>
+              <input type="text" id="adminUsername" class="input-field" placeholder="admin" autocomplete="username" required/>
+            </div>
+            <div class="field-group">
+              <label class="input-label" for="adminPassword">MASTER ACCESS CIPHER (PASSWORD)</label>
+              <input type="password" id="adminPassword" class="input-field" placeholder="••••••••" autocomplete="current-password" required/>
+            </div>
+            <button type="submit" id="btnSubmitLogin" class="btn-gw" style="width:100%;">
+              ◆ ENGAGE OPERATOR CMS TERMINAL
+            </button>
+          </form>
+
+          <div style="margin-top:12px;text-align:center;">
+            <button type="button" onclick="quickFillDevCredentials()" style="background:transparent;border:none;color:var(--text-dim);font-size:10px;cursor:pointer;text-decoration:underline;">
+              [ Autofill Default Operator Callsign ]
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TERMINAL FOOTER / LOG -->
+    <div class="card-foot">
+      <div>
+        <span style="color:var(--text-dim);">SYSTEM: </span>
+        <span id="termStatusLog">&gt; AWAITING MATRIX ALIGNMENT...</span>
+      </div>
+      <div>
+        <a href="/" class="foot-link">← RETURN TO HUD</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentConfig = null;
+let currentTiles = [];
+let gridSize = 3;
+let initialScramble = [];
+let symbols = [];
+let isPuzzleVerified = false;
+let verifiedPuzzleToken = null;
+let verifiedGatewayToken = null;
+let lockoutTimer = null;
+
+// Initialize on page load
+window.addEventListener('DOMContentLoaded', async () => {
+  // Check if existing token already valid
+  const existingToken = sessionStorage.getItem('admin_token') || localStorage.getItem('admin_token');
+  if (existingToken) {
+    try {
+      const res = await fetch('/api/auth/verify', {
+        headers: { 'Authorization': 'Bearer ' + existingToken }
+      });
+      const d = await res.json();
+      if (d.authenticated) {
+        setLog('> ACTIVE SESSION DETECTED. DIRECTING TO CMS...', 'gold');
+        window.location.href = `/admin?admin_token=${encodeURIComponent(existingToken)}`;
+        return;
+      }
+    } catch (e) {}
+  }
+
+  await fetchGatewayConfig();
+});
+
+function setLog(msg, color = 'gold') {
+  const el = document.getElementById('termStatusLog');
+  el.textContent = msg;
+  if (color === 'green') el.style.color = 'var(--green)';
+  else if (color === 'red') el.style.color = 'var(--red)';
+  else if (color === 'cyan') el.style.color = 'var(--cyan)';
+  else el.style.color = 'var(--gold)';
+}
+
+async function fetchGatewayConfig() {
+  setLog('> INITIALIZING RUNE CIPHER MATRIX...');
+  try {
+    const res = await fetch('/api/gateway/config');
+    if (!res.ok) throw new Error('Failed to load gateway configuration.');
+    currentConfig = await res.json();
+    gridSize = currentConfig.grid_size || 3;
+    symbols = currentConfig.symbols || [];
+    initialScramble = [...(currentConfig.initial_scramble || [])];
+
+    currentTiles = [...initialScramble];
+    renderPuzzle();
+    setLog('> MATRIX LOADED. ARRANGE RUNES IN NUMERICAL ORDER (1-8).');
+  } catch (err) {
+    setLog('> FAILED TO CONTACT GATEWAY: ' + err.message, 'red');
+  }
+}
+
+function renderPuzzle() {
+  const board = document.getElementById('puzzleBoard');
+  board.innerHTML = '';
+  board.style.gridTemplateColumns = `repeat(${gridSize}, 72px)`;
+  board.style.gridTemplateRows = `repeat(${gridSize}, 72px)`;
+
+  currentTiles.forEach((tileValue, index) => {
+    const tile = document.createElement('div');
+    tile.id = `puzzle-tile-${index}`;
+    
+    if (tileValue === null || tileValue === undefined || tileValue === '') {
+      tile.className = 'puzzle-tile empty';
+      tile.innerHTML = '';
+    } else {
+      tile.className = 'puzzle-tile';
+      const symbolChar = symbols[tileValue] || (tileValue + 1);
+      tile.innerHTML = `
+        <span class="tile-number">${tileValue + 1}</span>
+        <span class="rune-symbol">${symbolChar}</span>
+      `;
+      tile.addEventListener('click', () => handleTileClick(index));
+    }
+
+    board.appendChild(tile);
+  });
+}
+
+function handleTileClick(clickedIndex) {
+  if (isPuzzleVerified) return;
+  const emptyIndex = currentTiles.findIndex(t => t === null || t === undefined || t === '');
+  if (emptyIndex === -1) return;
+
+  const rowClicked = Math.floor(clickedIndex / gridSize);
+  const colClicked = clickedIndex % gridSize;
+  const rowEmpty = Math.floor(emptyIndex / gridSize);
+  const colEmpty = emptyIndex % gridSize;
+
+  // Check Manhattan adjacency
+  const isAdjacent = (Math.abs(rowClicked - rowEmpty) + Math.abs(colClicked - colEmpty)) === 1;
+
+  if (isAdjacent) {
+    currentTiles[emptyIndex] = currentTiles[clickedIndex];
+    currentTiles[clickedIndex] = null;
+    renderPuzzle();
+  }
+}
+
+// Reset puzzle
+document.getElementById('btnResetPuzzle').addEventListener('click', () => {
+  if (isPuzzleVerified) return;
+  currentTiles = [...initialScramble];
+  renderPuzzle();
+  setLog('> PUZZLE RESET TO INITIAL SCRAMBLE SEQUENCE.');
+});
+
+// Verify Rune Matrix
+document.getElementById('btnVerifyPuzzle').addEventListener('click', async () => {
+  const btn = document.getElementById('btnVerifyPuzzle');
+  btn.disabled = true;
+  btn.textContent = 'VERIFYING...';
+  setLog('> VERIFYING RUNE SEQUENCE WITH CIPHER GATEWAY...');
+
+  try {
+    const res = await fetch('/api/gateway/verify-puzzle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tiles: currentTiles })
+    });
+
+    const data = await res.json();
+
+    if (res.status === 429) {
+      handleLockout(data.remainingSec);
+      return;
+    }
+
+    if (!data.success) {
+      setLog('> ' + (data.error || 'CIPHER_MISMATCH: Incorrect rune sequence.'), 'red');
+      const board = document.getElementById('puzzleBoard');
+      board.style.transform = 'translateX(4px)';
+      setTimeout(() => { board.style.transform = 'translateX(-4px)'; }, 100);
+      setTimeout(() => { board.style.transform = 'none'; }, 200);
+      return;
+    }
+
+    // Success! Stage 1 complete
+    isPuzzleVerified = true;
+    verifiedPuzzleToken = data.puzzle_token;
+    sessionStorage.setItem('gateway_puzzle_token', data.puzzle_token);
+
+    document.getElementById('puzzleBoard').classList.add('unlocked');
+    document.getElementById('puzzleBadge').className = 'panel-badge badge-unlocked';
+    document.getElementById('puzzleBadge').textContent = 'MATRIX ALIGNED ✓';
+    document.getElementById('chipStep1').className = 'step-chip completed';
+    document.getElementById('chipStep2').className = 'step-chip active';
+
+    // Unlock Stage 2 in Right Panel
+    const passInput = document.getElementById('passcodeInput');
+    const passBtn = document.getElementById('btnSubmitPasscode');
+    const passNotice = document.getElementById('passcodeNotice');
+    const passBadge = document.getElementById('passcodeBadge');
+
+    passInput.disabled = false;
+    passBtn.disabled = false;
+    passBadge.className = 'panel-badge badge-ready';
+    passBadge.textContent = 'AWAITING KEY';
+    passNotice.className = 'status-callout callout-success';
+    passNotice.innerHTML = '✓ <strong>Rune Matrix Verified.</strong> Enter the clearance cipher key below.';
+    passInput.focus();
+
+    setLog('> MATRIX SEQUENCE ACCEPTED. ENTER CLEARANCE CIPHER KEY.', 'green');
+
+  } catch (err) {
+    setLog('> GATEWAY COMMUNICATION ERROR: ' + err.message, 'red');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = isPuzzleVerified ? '✓ MATRIX ALIGNED' : '◆ VERIFY MATRIX';
+  }
+});
+
+// Handle Passcode Submit (Stage 2)
+async function handlePasscodeSubmit(e) {
+  e.preventDefault();
+  const passInput = document.getElementById('passcodeInput');
+  const btn = document.getElementById('btnSubmitPasscode');
+  const passcode = passInput.value.trim();
+
+  if (!passcode) return;
+
+  btn.disabled = true;
+  btn.textContent = 'AUTHENTICATING CIPHER...';
+  setLog('> VERIFYING CLEARANCE CIPHER KEY WITH SECURITY VAULT...');
+
+  const puzzleToken = verifiedPuzzleToken || sessionStorage.getItem('gateway_puzzle_token');
+
+  try {
+    const res = await fetch('/api/gateway/verify-passcode', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(puzzleToken ? { 'x-puzzle-token': puzzleToken } : {})
+      },
+      body: JSON.stringify({
+        passcode,
+        puzzle_token: puzzleToken
+      })
+    });
+
+    const data = await res.json();
+
+    if (res.status === 429) {
+      handleLockout(data.remainingSec);
+      return;
+    }
+
+    if (!data.success) {
+      setLog('> ' + (data.error || 'ACCESS_DENIED: Invalid clearance cipher.'), 'red');
+      passInput.value = '';
+      passInput.focus();
+      return;
+    }
+
+    // Success! Stage 2 complete
+    verifiedGatewayToken = data.gateway_token;
+    sessionStorage.setItem('gateway_clearance_token', data.gateway_token);
+
+    document.getElementById('chipStep2').className = 'step-chip completed';
+    document.getElementById('chipStep3').className = 'step-chip active';
+
+    setLog('> GATEWAY CLEARANCE GRANTED. OPERATOR AUTHENTICATION UNLOCKED.', 'green');
+
+    // Seamlessly transition right panel to Stage 3 (Operator Login)
+    document.getElementById('phasePasscode').style.display = 'none';
+    const loginPhase = document.getElementById('phaseLogin');
+    loginPhase.style.display = 'flex';
+    document.getElementById('adminUsername').focus();
+
+  } catch (err) {
+    setLog('> GATEWAY AUTHENTICATION ERROR: ' + err.message, 'red');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '◆ UNLOCK GATEWAY BARRIER';
+  }
+}
+
+// Handle Operator Login (Stage 3)
+async function handleLoginSubmit(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btnSubmitLogin');
+  const u = document.getElementById('adminUsername').value.trim();
+  const p = document.getElementById('adminPassword').value;
+
+  if (!u || !p) return;
+
+  btn.disabled = true;
+  btn.textContent = 'AUTHORIZING OPERATOR...';
+  setLog('> INITIATING OPERATOR AUTHENTICATION HANDSHAKE...');
+
+  const gwToken = verifiedGatewayToken || sessionStorage.getItem('gateway_clearance_token');
+
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(gwToken ? { 'x-gateway-token': gwToken } : {})
+      },
+      body: JSON.stringify({
+        username: u,
+        password: p,
+        gateway_token: gwToken
+      })
+    });
+
+    const data = await res.json();
+
+    if (res.status === 429) {
+      handleLockout(data.remainingSec);
+      return;
+    }
+
+    if (res.ok && data.success) {
+      if (data.token) {
+        sessionStorage.setItem('admin_token', data.token);
+        localStorage.setItem('admin_token', data.token);
+      }
+      document.getElementById('chipStep3').className = 'step-chip completed';
+      setLog('> CLEARANCE AUTHORIZED. LAUNCHING OPERATOR CMS TERMINAL...', 'green');
+      
+      // Directly transition into existing CMS with token query param to guarantee zero redirect loop
+      setTimeout(() => {
+        const dest = data.token ? `/admin?admin_token=${encodeURIComponent(data.token)}` : '/admin';
+        window.location.href = dest;
+      }, 400);
+
+    } else {
+      btn.disabled = false;
+      btn.textContent = '◆ ENGAGE OPERATOR CMS TERMINAL';
+      setLog('> ' + (data.error || 'ACCESS_DENIED: Invalid operator credentials.'), 'red');
+    }
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = '◆ ENGAGE OPERATOR CMS TERMINAL';
+    setLog('> SYSTEM COMMUNICATION ERROR: ' + err.message, 'red');
+  }
+}
+
+function quickFillDevCredentials() {
+  document.getElementById('adminUsername').value = 'admin';
+  document.getElementById('adminPassword').value = 'admin123';
+  setLog('> DEFAULT CALLSIGN POPULATED. PRESS ENGAGE.', 'cyan');
+}
+
+function handleLockout(seconds) {
+  let rem = seconds || 300;
+  clearInterval(lockoutTimer);
+  setLog(`> SECURITY LOCKOUT: Max attempts reached. Cooldown: ${rem}s`, 'red');
+
+  const btnP = document.getElementById('btnVerifyPuzzle');
+  const btnC = document.getElementById('btnSubmitPasscode');
+  const btnL = document.getElementById('btnSubmitLogin');
+  if (btnP) btnP.disabled = true;
+  if (btnC) btnC.disabled = true;
+  if (btnL) btnL.disabled = true;
+
+  lockoutTimer = setInterval(() => {
+    rem--;
+    if (rem <= 0) {
+      clearInterval(lockoutTimer);
+      if (btnP) btnP.disabled = false;
+      if (btnC && isPuzzleVerified) btnC.disabled = false;
+      if (btnL) btnL.disabled = false;
+      setLog('> LOCKOUT COOLDOWN EXPIRED. READY FOR RE-ENTRY.', 'gold');
+    } else {
+      setLog(`> SECURITY LOCKOUT: Cooldown active (${rem}s remaining)`, 'red');
+    }
+  }, 1000);
+}
+</script>
+
+</body>
+</html>
