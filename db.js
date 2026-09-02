@@ -868,6 +868,7 @@ export const EvidenceDAO = {
 export const CommandRolesDAO = {
   async getAll() {
     let roles = [];
+    let supabaseOk = false;
     if (isSupabaseActive && supabaseClient) {
       try {
         const { data, error } = await supabaseClient
@@ -877,6 +878,7 @@ export const CommandRolesDAO = {
           .order('id', { ascending: true });
         if (!error && data) {
           roles = data;
+          supabaseOk = true;
         } else if (error) {
           logSupabaseFallbackWarning('command_roles', error);
         }
@@ -885,7 +887,10 @@ export const CommandRolesDAO = {
       }
     }
 
-    if (roles.length === 0) {
+    // Only fall back to the local path on an actual failure — an empty
+    // array is a valid, successful Supabase result (e.g. no roles added
+    // yet), not a reason to hit the local-only fallback.
+    if (!supabaseOk) {
       const res = await query('SELECT * FROM command_roles ORDER BY display_order ASC, id ASC');
       roles = res.rows;
     }
@@ -1008,6 +1013,7 @@ export const CommandRolesDAO = {
 export const CertificationsDAO = {
   async getAll() {
     let certs = [];
+    let supabaseOk = false;
     if (isSupabaseActive && supabaseClient) {
       try {
         const { data, error } = await supabaseClient
@@ -1017,6 +1023,7 @@ export const CertificationsDAO = {
           .order('id', { ascending: true });
         if (!error && data) {
           certs = data;
+          supabaseOk = true;
         } else if (error) {
           logSupabaseFallbackWarning('certifications', error);
         }
@@ -1025,7 +1032,7 @@ export const CertificationsDAO = {
       }
     }
 
-    if (certs.length === 0) {
+    if (!supabaseOk) {
       const res = await query('SELECT * FROM certifications ORDER BY display_order ASC, id ASC');
       certs = res.rows;
     }
@@ -1343,6 +1350,7 @@ export const ProfileDAO = {
 export const ProjectsDAO = {
   async getAll(includeHidden = false) {
     let projects = [];
+    let supabaseOk = false;
     if (isSupabaseActive && supabaseClient) {
       try {
         let q = supabaseClient.from('projects').select('*');
@@ -1354,6 +1362,7 @@ export const ProjectsDAO = {
           .order('id', { ascending: true });
         if (!error && data) {
           projects = data;
+          supabaseOk = true;
         } else if (error) {
           logSupabaseFallbackWarning('projects', error);
         }
@@ -1362,7 +1371,7 @@ export const ProjectsDAO = {
       }
     }
 
-    if (projects.length === 0) {
+    if (!supabaseOk) {
       let res;
       if (includeHidden) {
         res = await query('SELECT * FROM projects ORDER BY display_order ASC, id ASC');
@@ -1677,15 +1686,23 @@ export const AdminDAO = {
     return res.rows[0] || null;
   },
   async verifyPassword(username, password) {
-    if (!username || !password) return false;
+    const result = await AdminDAO.verifyPasswordWithUser(username, password);
+    return result.valid;
+  },
+  // Combines the username lookup and password check into a single DB round
+  // trip, and returns the already-fetched user row so callers (e.g. the
+  // login route) don't need a second redundant lookup afterward.
+  async verifyPasswordWithUser(username, password) {
+    if (!username || !password) return { valid: false, user: null };
     const user = await AdminDAO.findByUsername(username);
-    if (!user || !user.password_hash) return false;
+    if (!user || !user.password_hash) return { valid: false, user: null };
 
     if (user.password_hash.startsWith('$2a$') || user.password_hash.startsWith('$2b$') || user.password_hash.startsWith('$2y$')) {
       try {
-        return bcrypt.compareSync(password, user.password_hash);
+        const valid = bcrypt.compareSync(password, user.password_hash);
+        return { valid, user: valid ? user : null };
       } catch {
-        return false;
+        return { valid: false, user: null };
       }
     }
 
@@ -1696,15 +1713,15 @@ export const AdminDAO = {
           const testHash = crypto.createHmac('sha256', salt).update(password).digest('hex');
           if (crypto.timingSafeEqual(Buffer.from(testHash, 'hex'), Buffer.from(storedHash, 'hex'))) {
             await AdminDAO.updatePassword(username, password);
-            return true;
+            return { valid: true, user };
           }
         } catch {
-          return false;
+          return { valid: false, user: null };
         }
       }
     }
 
-    return false;
+    return { valid: false, user: null };
   },
   async updatePassword(username, newPassword) {
     if (!username || !newPassword) return false;
